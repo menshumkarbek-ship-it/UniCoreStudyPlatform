@@ -16,6 +16,16 @@ bun dev
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
+## Backend setup
+
+The administrator role uses the shared demo credentials `professor@tronsabak.dev` and `Professor123!` at the Ala-Too International University login. The separate admin account is also available as `admin@tronsabak.dev` with the same password. Change these development credentials before deployment.
+
+This app uses Next.js route handlers with Node 24's built-in SQLite driver for the local skeleton. The first request to `/api/universities` creates `data/tronsabak.sqlite` and seeds the university and demo accounts. Run `npm run db:migrate` when the schema changes, `npm run db:seed` to add demo courses, groups, teaching assignments, enrollment, and homework, or `npm run db:check` to inspect the database tables. PostgreSQL is the intended production database for concurrent republic-wide use; see [docs/data-architecture.md](docs/data-architecture.md) for the relational model and migration rules.
+
+Copy `.env.example` to `.env.local` and set a long random `AUTH_SECRET` before deployment. Authentication uses an HTTP-only signed session cookie. The database layer is isolated in `src/lib/db.ts`, so the SQLite provider can be replaced with PostgreSQL without changing the route contracts.
+
+Available backend endpoints include `GET /api/universities`, `POST /api/auth/login`, `GET /api/auth/session`, `POST /api/auth/logout`, `GET /api/courses`, `GET /api/homework`, and professor-only `POST /api/homework`.
+
 You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.

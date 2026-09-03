@@ -24,3 +24,9 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+@media (min-width: 1024px) {
+  main > div > div > div.order-2 {
+    grid-template-columns: minmax(0, 42rem) minmax(220px, 1fr);
+  }
+}
