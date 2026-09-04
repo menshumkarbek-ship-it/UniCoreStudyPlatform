@@ -106,7 +106,10 @@
     "studentsSuffix": "студентов",
     "dueLabel": "Срок",
     "submittedOf": "{submitted} из {total} сдано",
-    "openAdministratorProfile": "Открыть профиль администратора"
+    "openAdministratorProfile": "Открыть профиль администратора",
+    "openStudentProfile": "Открыть профиль студента",
+    "studentProfileSrOnly": "Профиль студента",
+    "openProfessorProfile": "Открыть профиль профессора"
   },
   "admin": {
     "title": "Управление данными",

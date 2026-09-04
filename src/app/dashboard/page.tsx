@@ -8,6 +8,7 @@ import Footer from "@/components/Footer";
 import MenuDropdown from "@/components/MenuDropdown";
 import ProfessorWorkspace from "@/components/ProfessorWorkspace";
 import { BarChart3, BookOpen, CalendarCheck, CircleUserRound, ClipboardList, FileUp, GraduationCap, LayoutDashboard, LogOut, Plus, Users, CalendarDays } from "lucide-react";
+import { useDictionary } from "@/i18n/locale-provider";
 
 type Role = "student" | "professor" | "admin";
 type Course = { code: string; title: string; professor: string; students: number };
@@ -28,6 +29,7 @@ export default function Dashboard() {
   const [profilePhoto, setProfilePhoto] = useState<string | null>(null);
   const university = useSyncExternalStore(() => () => undefined, getUniversity, () => "Ala-Too International University");
   const [currentDateTime, setCurrentDateTime] = useState("");
+  const dict = useDictionary();
 
   useEffect(() => {
     const savedRole = window.localStorage.getItem("tronsabak-role");
@@ -44,36 +46,36 @@ export default function Dashboard() {
 
   return (
     <main className="min-h-screen bg-[#f4f7fb] text-[#17233d]">
-      {role === "admin" && <Link href="/profile" className="block border-b border-amber-200 bg-amber-50 px-5 py-3 text-center text-xs font-bold uppercase tracking-[0.16em] text-amber-800">Open administrator profile</Link>}
+      {role === "admin" && <Link href="/profile" className="block border-b border-amber-200 bg-amber-50 px-5 py-3 text-center text-xs font-bold uppercase tracking-[0.16em] text-amber-800">{dict.dashboard.openAdministratorProfile}</Link>}
       <header className="border-b border-slate-200 bg-white px-5 py-4 sm:px-8">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-4">
-          <Link href="/" className="flex items-center gap-3"><span className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#15345b] text-white"><BookOpen size={21} /></span><span className="text-lg font-bold text-[#15345b]">UniCore</span></Link>
-          <div className="flex items-center gap-5"><nav className="hidden items-center gap-6 md:flex"><MenuDropdown />{role === "student" && <Link href="/profile" className="text-sm font-semibold text-cyan-700 hover:text-cyan-900">Aibek Temirov</Link>}</nav>{role === "student" && <Link href="/profile" aria-label="Open student profile" className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full border-2 border-cyan-100 bg-cyan-50 text-xs font-bold text-cyan-700 transition hover:border-cyan-300 hover:bg-cyan-100"><span className="sr-only">Student profile</span>{profilePhoto ? <img src={profilePhoto} alt="" className="h-full w-full object-cover" /> : <CircleUserRound size={21} />}</Link>}</div>
+          <Link href="/" className="flex items-center gap-3"><span className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#15345b] text-white"><BookOpen size={21} /></span><span className="text-lg font-bold text-[#15345b]">{dict.common.appName}</span></Link>
+          <div className="flex items-center gap-5"><nav className="hidden items-center gap-6 md:flex"><MenuDropdown />{role === "student" && <Link href="/profile" className="text-sm font-semibold text-cyan-700 hover:text-cyan-900">Aibek Temirov</Link>}</nav>{role === "student" && <Link href="/profile" aria-label={dict.dashboard.openStudentProfile} className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full border-2 border-cyan-100 bg-cyan-50 text-xs font-bold text-cyan-700 transition hover:border-cyan-300 hover:bg-cyan-100"><span className="sr-only">{dict.dashboard.studentProfileSrOnly}</span>{profilePhoto ? <img src={profilePhoto} alt="" className="h-full w-full object-cover" /> : <CircleUserRound size={21} />}</Link>}</div>
         </div>
       </header>
 
       <div className="mx-auto max-w-7xl px-5 py-8 sm:px-8">
         <div className="grid gap-5 lg:grid-cols-[220px_minmax(0,1fr)] lg:items-start">
           <aside className="rounded-xl border border-white bg-white p-4 shadow-sm lg:self-stretch">
-            <ProfileSummary name="Aibek Temirov" role="Student" photo={profilePhoto} />
-            <p className="mb-3 text-xs font-bold uppercase tracking-[0.16em] text-slate-400">Quick access</p>
-            <nav className="space-y-1" aria-label="Workspace sections"><Link href="/subjects" className="block rounded-lg bg-cyan-50 px-3 py-2.5 text-sm font-semibold text-cyan-700">Subjects</Link><Link href="/homework" className="block rounded-lg px-3 py-2.5 text-sm font-medium text-slate-500 hover:bg-slate-50 hover:text-slate-800">Homework</Link><Link href="/timetable" className="block rounded-lg px-3 py-2.5 text-sm font-medium text-slate-500 hover:bg-slate-50 hover:text-slate-800">Timetable</Link><a href="#assignments" className="block rounded-lg px-3 py-2.5 text-sm font-medium text-slate-500 hover:bg-slate-50 hover:text-slate-800">Assignments</a><a href="#exams" className="block rounded-lg px-3 py-2.5 text-sm font-medium text-slate-500 hover:bg-slate-50 hover:text-slate-800">Exams</a><Link href="/profile" className="block rounded-lg px-3 py-2.5 text-sm font-medium text-slate-500 hover:bg-slate-50 hover:text-slate-800">Profile</Link></nav>
+            <ProfileSummary name="Aibek Temirov" role={dict.auth.student} photo={profilePhoto} />
+            <p className="mb-3 text-xs font-bold uppercase tracking-[0.16em] text-slate-400">{dict.dashboard.quickAccess}</p>
+            <nav className="space-y-1" aria-label="Workspace sections"><Link href="/subjects" className="block rounded-lg bg-cyan-50 px-3 py-2.5 text-sm font-semibold text-cyan-700">{dict.common.nav.subjects}</Link><Link href="/homework" className="block rounded-lg px-3 py-2.5 text-sm font-medium text-slate-500 hover:bg-slate-50 hover:text-slate-800">{dict.common.nav.homework}</Link><Link href="/timetable" className="block rounded-lg px-3 py-2.5 text-sm font-medium text-slate-500 hover:bg-slate-50 hover:text-slate-800">{dict.common.nav.timetable}</Link><a href="#assignments" className="block rounded-lg px-3 py-2.5 text-sm font-medium text-slate-500 hover:bg-slate-50 hover:text-slate-800">{dict.dashboard.assignments}</a><a href="#exams" className="block rounded-lg px-3 py-2.5 text-sm font-medium text-slate-500 hover:bg-slate-50 hover:text-slate-800">{dict.dashboard.exams}</a><Link href="/profile" className="block rounded-lg px-3 py-2.5 text-sm font-medium text-slate-500 hover:bg-slate-50 hover:text-slate-800">{dict.common.nav.profile}</Link></nav>
             <div className="mt-8 border-t border-slate-100 pt-5">
-              <p className="text-xs font-bold uppercase tracking-[0.14em] text-slate-400">Student account</p>
-              <p className="mt-3 text-sm font-semibold text-slate-700">Faculty of Medicine</p>
-              <Link href="/login" className="mt-5 flex items-center gap-2 text-xs font-semibold text-slate-500 hover:text-red-600"><LogOut size={14} /> Sign out</Link>
+              <p className="text-xs font-bold uppercase tracking-[0.14em] text-slate-400">{dict.dashboard.studentAccount}</p>
+              <p className="mt-3 text-sm font-semibold text-slate-700">{dict.dashboard.facultyOfMedicine}</p>
+              <Link href="/login" className="mt-5 flex items-center gap-2 text-xs font-semibold text-slate-500 hover:text-red-600"><LogOut size={14} /> {dict.common.actions.signOut}</Link>
             </div>
           </aside>
 
           <div className="flex flex-col gap-5">
             <div className="grid gap-6 md:grid-cols-2">
-              <Stat icon={BookOpen} label="University" value={university} detail="Faculty of Medicine" />
-              <Stat icon={CalendarCheck} label="Today" value={currentDateTime || "Loading time..."} detail="Local date and time" />
+              <Stat icon={BookOpen} label={dict.dashboard.university} value={university} detail={dict.dashboard.facultyOfMedicine} />
+              <Stat icon={CalendarCheck} label={dict.dashboard.today} value={currentDateTime || dict.common.misc.loading} detail={dict.dashboard.localDateTime} />
             </div>
 
             <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_320px] lg:items-stretch">
               <section className="flex min-h-[560px] flex-col rounded-xl border border-white bg-white p-5 shadow-sm">
-                <div className="flex items-center justify-between"><div><h2 className="font-semibold text-slate-800">Latest notifications</h2><p className="mt-1 text-sm text-slate-500">Course updates and university messages.</p></div><span className="h-2 w-2 rounded-full bg-cyan-500" /></div>
+                <div className="flex items-center justify-between"><div><h2 className="font-semibold text-slate-800">{dict.dashboard.latestNotifications}</h2><p className="mt-1 text-sm text-slate-500">{dict.dashboard.notificationsSubtitle}</p></div><span className="h-2 w-2 rounded-full bg-cyan-500" /></div>
                 <div className="mt-4 flex flex-1 flex-col justify-between gap-3"><p className="rounded-lg bg-cyan-50/70 p-3 text-xs leading-5 text-slate-600"><b className="block text-cyan-800">New presentation</b>Lecture materials added to {course.code}.</p><p id="assignments" className="rounded-lg bg-amber-50/70 p-3 text-xs leading-5 text-slate-600"><b className="block text-amber-800">Assignment reminder</b>Case Study 04 is due tomorrow.</p><p id="exams" className="rounded-lg bg-emerald-50/70 p-3 text-xs leading-5 text-slate-600"><b className="block text-emerald-800">Exam schedule</b>Midterm review opens next week.</p><p className="rounded-lg bg-indigo-50/70 p-3 text-xs leading-5 text-slate-600"><b className="block text-indigo-800">Faculty announcement</b>Faculty orientation meeting is Friday at 14:00.</p><p className="rounded-lg bg-sky-50/70 p-3 text-xs leading-5 text-slate-600"><b className="block text-sky-800">Group update</b>Your MED-24A group timetable has been updated.</p><p className="rounded-lg bg-rose-50/70 p-3 text-xs leading-5 text-slate-600"><b className="block text-rose-800">Submission received</b>Your latest homework submission was received successfully.</p></div>
               </section>
 
@@ -114,12 +116,13 @@ function ProfileSummary({ name, role, photo }: { name: string; role: string; pho
 
 function TodoList() {
   const items = [{ title: "Enzyme kinetics worksheet", course: "MED203", due: "Due tomorrow", urgent: true }, { title: "Cardiovascular case study", course: "MED101", due: "Due Sep 8", urgent: false }, { title: "Respiratory physiology notes", course: "MED112", due: "Due Sep 11", urgent: false }];
+  const dict = useDictionary();
   return (
     <section className="h-full w-[320px] rounded-xl border border-white bg-white p-5 shadow-sm">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="font-semibold text-slate-800">To-Do list</h2>
-          <p className="mt-1 text-sm text-slate-500">Closest homework deadlines.</p>
+          <h2 className="font-semibold text-slate-800">{dict.dashboard.todoList}</h2>
+          <p className="mt-1 text-sm text-slate-500">{dict.dashboard.todoSubtitle}</p>
         </div>
         <ClipboardList size={20} className="text-cyan-600" />
       </div>
@@ -139,7 +142,7 @@ function TodoList() {
           ))}
         </div>
 
-        <Link href="/homework" className="mt-auto pt-4 text-xs font-bold text-cyan-700 hover:text-cyan-900">View all homework</Link>
+        <Link href="/homework" className="mt-auto pt-4 text-xs font-bold text-cyan-700 hover:text-cyan-900">{dict.dashboard.viewAllHomework}</Link>
       </div>
     </section>
   );

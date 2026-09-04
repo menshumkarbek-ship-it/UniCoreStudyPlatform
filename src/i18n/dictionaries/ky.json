@@ -106,7 +106,10 @@
     "studentsSuffix": "students",
     "dueLabel": "Due",
     "submittedOf": "{submitted} of {total} submitted",
-    "openAdministratorProfile": "Open administrator profile"
+    "openAdministratorProfile": "Open administrator profile",
+    "openStudentProfile": "Open student profile",
+    "studentProfileSrOnly": "Student profile",
+    "openProfessorProfile": "Open professor profile"
   },
   "admin": {
     "title": "Manage your data",

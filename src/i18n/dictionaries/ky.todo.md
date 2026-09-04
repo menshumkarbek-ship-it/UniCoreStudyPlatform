@@ -48,6 +48,9 @@ quick sanity check.
 - `dashboard.dueLabel`
 - `dashboard.submittedOf`
 - `dashboard.openAdministratorProfile`
+- `dashboard.openStudentProfile`
+- `dashboard.studentProfileSrOnly`
+- `dashboard.openProfessorProfile`
 - `admin.title`
 - `admin.eyebrow`
 - `admin.description`
