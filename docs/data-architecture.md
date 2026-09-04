@@ -1,4 +1,4 @@
-# TronSabak data architecture
+# UniCore data architecture
 
 ## Database decision
 

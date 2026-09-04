@@ -26,7 +26,7 @@ body {
 }
 
 @media (min-width: 1024px) {
-  main > div > div > div.order-2 {
-    grid-template-columns: minmax(0, 42rem) minmax(220px, 1fr);
+  main > header + div {
+    position: relative;
   }
 }

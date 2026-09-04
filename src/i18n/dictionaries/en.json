@@ -1,0 +1,168 @@
+{
+  "common": {
+    "appName": "UniCore",
+    "nav": {
+      "home": "Home",
+      "subjects": "Subjects",
+      "homework": "Homework",
+      "timetable": "Timetable",
+      "dashboard": "Dashboard",
+      "profile": "Profile"
+    },
+    "menu": {
+      "menu": "Menu"
+    },
+    "notifications": {
+      "title": "Latest notifications",
+      "markAllRead": "Mark all read",
+      "openNotifications": "Open notifications"
+    },
+    "actions": {
+      "signOut": "Sign out",
+      "save": "Save",
+      "cancel": "Cancel",
+      "edit": "Edit",
+      "delete": "Delete",
+      "addRecord": "Add record",
+      "create": "Create"
+    },
+    "language": {
+      "en": "English",
+      "ru": "Русский",
+      "ky": "Кыргызча",
+      "chooseLanguage": "Choose language"
+    },
+    "footer": {
+      "tagline": "Making Teaching and Learning Easier",
+      "useCases": "Use Cases",
+      "aboutUs": "About Us",
+      "officialWebsite": "Official WebSite",
+      "app": "APP",
+      "scanQr": "Scan to open the mobile portal",
+      "useCaseItems": {
+        "blendedLearning": "Blended Learning",
+        "app": "APP",
+        "moocs": "MOOCs/SPOCs Module",
+        "business": "UniCore for Business"
+      }
+    },
+    "misc": {
+      "loading": "Loading time...",
+      "connectedReady": "Connected and ready",
+      "refreshing": "Refreshing..."
+    }
+  },
+  "auth": {
+    "welcomeBack": "Welcome back",
+    "chooseRole": "Choose your role to open the learning workspace.",
+    "demoAccountLabel": "Shared demo account",
+    "demoIdLabel": "ID",
+    "demoPasswordLabel": "Password",
+    "universityLabel": "University",
+    "universitySearchPlaceholder": "Search your university",
+    "noUniversitiesFound": "No universities found.",
+    "identifierLabel": "Email or account ID",
+    "identifierPlaceholder": "Enter your account email",
+    "passwordLabel": "Password",
+    "passwordPlaceholder": "Enter any demo password",
+    "loginAsAdmin": "Login as Admin",
+    "opening": "Opening...",
+    "student": "Student",
+    "professor": "Professor",
+    "demoModeNotice": "Demo mode: credentials are used only for local validation.",
+    "errorMissingFields": "Enter your demo ID and password to continue.",
+    "errorMissingUniversity": "Choose your university before continuing.",
+    "errorGeneric": "Unable to sign in right now.",
+    "errorUnreachable": "Unable to reach the authentication service."
+  },
+  "dashboard": {
+    "university": "University",
+    "today": "Today",
+    "localDateTime": "Local date and time",
+    "facultyOfMedicine": "Faculty of Medicine",
+    "latestNotifications": "Latest notifications",
+    "notificationsSubtitle": "Course updates and university messages.",
+    "todoList": "To-Do list",
+    "todoSubtitle": "Closest homework deadlines.",
+    "viewAllHomework": "View all homework",
+    "quickAccess": "Quick access",
+    "assignments": "Assignments",
+    "exams": "Exams",
+    "studentAccount": "Student account",
+    "professorAccount": "Professor account",
+    "departmentOfMedicalSciences": "Department of Medical Sciences",
+    "teachingFaculty": "Teaching faculty",
+    "students": "Students",
+    "teachingOverview": "Teaching overview",
+    "myCourses": "My courses",
+    "myCoursesSubtitle": "Subjects and groups currently assigned to you.",
+    "professorWorkspace": "Professor workspace",
+    "homeworkGiven": "Homework given",
+    "homeworkGivenSubtitle": "Track assignments for your groups.",
+    "createNewAssignment": "Create new assignment",
+    "mySubjects": "My subjects",
+    "myTimetable": "My timetable",
+    "groupsLabel": "Groups",
+    "studentsSuffix": "students",
+    "dueLabel": "Due",
+    "submittedOf": "{submitted} of {total} submitted",
+    "openAdministratorProfile": "Open administrator profile"
+  },
+  "admin": {
+    "title": "Manage your data",
+    "eyebrow": "Administrator workspace",
+    "description": "Manage universities, faculties, people, subjects, groups, enrollments, assignments, and timetable entries.",
+    "models": "Models",
+    "createFormNotice": "Create records using the resource form.",
+    "recordDeleted": "Record deleted.",
+    "confirmDelete": "Delete this record? Related records may also be removed.",
+    "record": "Record",
+    "university": "University",
+    "details": "Details",
+    "actions": "Actions",
+    "records_forms": ["record", "records", "records"],
+    "resources": {
+      "universities": "Universities",
+      "faculties": "Faculties",
+      "professors": "Professors",
+      "subjects": "Subjects",
+      "students": "Students",
+      "groups": "Groups",
+      "enrollments": "Student enrollments",
+      "teachingAssignments": "Teaching assignments",
+      "timetable": "Timetable"
+    }
+  },
+  "subjects": {
+    "academicCatalog": "Academic catalog",
+    "teachingCatalog": "Teaching catalog"
+  },
+  "homework": {
+    "quickAccess": "Quick access",
+    "publishHomework": "Publish homework",
+    "submitted": "Submitted",
+    "needsAttention": "Needs attention",
+    "task_forms": ["task", "tasks", "tasks"]
+  },
+  "timetable": {
+    "teachingSchedule": "Teaching schedule",
+    "classSchedule": "Class schedule"
+  },
+  "profile": {
+    "studentAccount": "Student account",
+    "title": "Profile & settings",
+    "subtitle": "Manage your personal information and account preferences.",
+    "profilePhoto": "Profile photo",
+    "personalInformation": "Personal information",
+    "security": "Security"
+  },
+  "landing": {
+    "tagline": "Learning platform",
+    "courseAccess": "Course Access",
+    "courseAccessDescription": "Find lectures, reading materials, and learning resources organized for every class.",
+    "assignmentHub": "Assignment Hub",
+    "assignmentHubDescription": "Submit work, follow deadlines, and keep every academic task moving forward.",
+    "progressInsights": "Progress Insights",
+    "progressInsightsDescription": "See grades, milestones, and a clear picture of your growth throughout the term."
+  }
+}

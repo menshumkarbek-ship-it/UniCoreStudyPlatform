@@ -159,7 +159,7 @@ function seedDatabase(database: DatabaseSync) {
   if (universityCount > 0) {
     const university = database.prepare("SELECT id FROM universities WHERE name = ?").get("Ala-Too International University") as { id: number } | undefined;
     if (university) {
-      database.prepare("INSERT OR IGNORE INTO users (university_id, email, full_name, password_hash, role) VALUES (?, ?, ?, ?, 'admin')").run(university.id, "admin@tronsabak.dev", "TronSabak Administrator", hashSync("Professor123!", 12));
+      database.prepare("INSERT OR IGNORE INTO users (university_id, email, full_name, password_hash, role) VALUES (?, ?, ?, ?, 'admin')").run(university.id, "admin@tronsabak.dev", "UniCore Administrator", hashSync("Professor123!", 12));
       const professors = [
         ["professor@tronsabak.dev", "Dr. A. Karimov"],
         ["professor2@tronsabak.dev", "Prof. B. Sulaimanova"],
@@ -178,7 +178,7 @@ function seedDatabase(database: DatabaseSync) {
   const universityRow = database.prepare("SELECT id FROM universities WHERE name = ?").get("Ala-Too International University") as { id: number };
   const universityId = Number(universityRow.id);
   const admin = database.prepare("INSERT INTO users (university_id, email, full_name, password_hash, role) VALUES (?, ?, ?, ?, 'admin')");
-  admin.run(universityId, "admin@tronsabak.dev", "TronSabak Administrator", hashSync("Professor123!", 12));
+  admin.run(universityId, "admin@tronsabak.dev", "UniCore Administrator", hashSync("Professor123!", 12));
   const professors = [
     ["professor@tronsabak.dev", "Dr. A. Karimov"],
     ["professor2@tronsabak.dev", "Prof. B. Sulaimanova"],

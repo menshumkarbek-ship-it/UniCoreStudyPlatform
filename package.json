@@ -10,7 +10,8 @@
     "db:check": "node scripts/check-db.mjs",
     "db:migrate": "node scripts/migrate-db.mjs",
     "db:seed": "node scripts/seed-demo.mjs",
-    "admin:create": "node scripts/create-admin.mjs"
+    "admin:create": "node scripts/create-admin.mjs",
+    "i18n:check": "node scripts/check-i18n-keys.mjs"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",

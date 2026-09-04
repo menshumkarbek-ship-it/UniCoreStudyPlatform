@@ -1,0 +1,168 @@
+{
+  "common": {
+    "appName": "UniCore",
+    "nav": {
+      "home": "Главная",
+      "subjects": "Предметы",
+      "homework": "Домашние задания",
+      "timetable": "Расписание",
+      "dashboard": "Панель",
+      "profile": "Профиль"
+    },
+    "menu": {
+      "menu": "Меню"
+    },
+    "notifications": {
+      "title": "Последние уведомления",
+      "markAllRead": "Отметить всё прочитанным",
+      "openNotifications": "Открыть уведомления"
+    },
+    "actions": {
+      "signOut": "Выйти",
+      "save": "Сохранить",
+      "cancel": "Отмена",
+      "edit": "Изменить",
+      "delete": "Удалить",
+      "addRecord": "Добавить запись",
+      "create": "Создать"
+    },
+    "language": {
+      "en": "English",
+      "ru": "Русский",
+      "ky": "Кыргызча",
+      "chooseLanguage": "Выбрать язык"
+    },
+    "footer": {
+      "tagline": "Делаем преподавание и обучение проще",
+      "useCases": "Варианты использования",
+      "aboutUs": "О нас",
+      "officialWebsite": "Официальный сайт",
+      "app": "Приложение",
+      "scanQr": "Отсканируйте, чтобы открыть мобильный портал",
+      "useCaseItems": {
+        "blendedLearning": "Смешанное обучение",
+        "app": "Приложение",
+        "moocs": "Модуль MOOCs/SPOCs",
+        "business": "UniCore для бизнеса"
+      }
+    },
+    "misc": {
+      "loading": "Загрузка времени...",
+      "connectedReady": "Подключено и готово",
+      "refreshing": "Обновление..."
+    }
+  },
+  "auth": {
+    "welcomeBack": "С возвращением",
+    "chooseRole": "Выберите свою роль, чтобы открыть учебное пространство.",
+    "demoAccountLabel": "Общий демо-аккаунт",
+    "demoIdLabel": "ID",
+    "demoPasswordLabel": "Пароль",
+    "universityLabel": "Университет",
+    "universitySearchPlaceholder": "Найдите свой университет",
+    "noUniversitiesFound": "Университеты не найдены.",
+    "identifierLabel": "Email или ID аккаунта",
+    "identifierPlaceholder": "Введите email своего аккаунта",
+    "passwordLabel": "Пароль",
+    "passwordPlaceholder": "Введите любой демо-пароль",
+    "loginAsAdmin": "Войти как администратор",
+    "opening": "Открываем...",
+    "student": "Студент",
+    "professor": "Профессор",
+    "demoModeNotice": "Демо-режим: данные используются только для локальной проверки.",
+    "errorMissingFields": "Введите демо-ID и пароль, чтобы продолжить.",
+    "errorMissingUniversity": "Выберите университет, прежде чем продолжить.",
+    "errorGeneric": "Не удалось войти прямо сейчас.",
+    "errorUnreachable": "Не удалось подключиться к серверу авторизации."
+  },
+  "dashboard": {
+    "university": "Университет",
+    "today": "Сегодня",
+    "localDateTime": "Местная дата и время",
+    "facultyOfMedicine": "Медицинский факультет",
+    "latestNotifications": "Последние уведомления",
+    "notificationsSubtitle": "Обновления курсов и сообщения университета.",
+    "todoList": "Список дел",
+    "todoSubtitle": "Ближайшие сроки сдачи домашних заданий.",
+    "viewAllHomework": "Все домашние задания",
+    "quickAccess": "Быстрый доступ",
+    "assignments": "Задания",
+    "exams": "Экзамены",
+    "studentAccount": "Аккаунт студента",
+    "professorAccount": "Аккаунт профессора",
+    "departmentOfMedicalSciences": "Кафедра медицинских наук",
+    "teachingFaculty": "Преподаваемый факультет",
+    "students": "Студенты",
+    "teachingOverview": "Обзор преподавания",
+    "myCourses": "Мои курсы",
+    "myCoursesSubtitle": "Предметы и группы, закреплённые за вами.",
+    "professorWorkspace": "Рабочее пространство профессора",
+    "homeworkGiven": "Заданные домашние работы",
+    "homeworkGivenSubtitle": "Отслеживайте задания для ваших групп.",
+    "createNewAssignment": "Создать новое задание",
+    "mySubjects": "Мои предметы",
+    "myTimetable": "Моё расписание",
+    "groupsLabel": "Группы",
+    "studentsSuffix": "студентов",
+    "dueLabel": "Срок",
+    "submittedOf": "{submitted} из {total} сдано",
+    "openAdministratorProfile": "Открыть профиль администратора"
+  },
+  "admin": {
+    "title": "Управление данными",
+    "eyebrow": "Рабочее пространство администратора",
+    "description": "Управляйте университетами, факультетами, людьми, предметами, группами, зачислениями, назначениями и расписанием.",
+    "models": "Модели",
+    "createFormNotice": "Создавайте записи с помощью формы ресурса.",
+    "recordDeleted": "Запись удалена.",
+    "confirmDelete": "Удалить эту запись? Связанные записи также могут быть удалены.",
+    "record": "Запись",
+    "university": "Университет",
+    "details": "Подробности",
+    "actions": "Действия",
+    "records_forms": ["запись", "записи", "записей"],
+    "resources": {
+      "universities": "Университеты",
+      "faculties": "Факультеты",
+      "professors": "Профессора",
+      "subjects": "Предметы",
+      "students": "Студенты",
+      "groups": "Группы",
+      "enrollments": "Зачисления студентов",
+      "teachingAssignments": "Назначения преподавателей",
+      "timetable": "Расписание"
+    }
+  },
+  "subjects": {
+    "academicCatalog": "Каталог предметов",
+    "teachingCatalog": "Каталог преподавания"
+  },
+  "homework": {
+    "quickAccess": "Быстрый доступ",
+    "publishHomework": "Опубликовать домашнее задание",
+    "submitted": "Сдано",
+    "needsAttention": "Требует внимания",
+    "task_forms": ["задание", "задания", "заданий"]
+  },
+  "timetable": {
+    "teachingSchedule": "Расписание преподавания",
+    "classSchedule": "Расписание занятий"
+  },
+  "profile": {
+    "studentAccount": "Аккаунт студента",
+    "title": "Профиль и настройки",
+    "subtitle": "Управляйте личной информацией и настройками аккаунта.",
+    "profilePhoto": "Фото профиля",
+    "personalInformation": "Личная информация",
+    "security": "Безопасность"
+  },
+  "landing": {
+    "tagline": "Учебная платформа",
+    "courseAccess": "Доступ к курсам",
+    "courseAccessDescription": "Находите лекции, учебные материалы и ресурсы для каждого занятия.",
+    "assignmentHub": "Центр заданий",
+    "assignmentHubDescription": "Сдавайте работы, следите за сроками и продвигайте каждую учебную задачу.",
+    "progressInsights": "Анализ успеваемости",
+    "progressInsightsDescription": "Смотрите оценки, достижения и чёткую картину вашего прогресса за семестр."
+  }
+}

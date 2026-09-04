@@ -47,7 +47,7 @@ export default function Home() {
         <header className="flex items-center justify-between rounded-2xl border border-white/80 bg-white/60 px-4 py-3 shadow-sm backdrop-blur sm:px-5">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#15345b] text-white shadow-lg shadow-[#15345b]/20"><GraduationCap size={23} strokeWidth={1.8} /></div>
-            <div><p className="text-lg font-bold tracking-tight text-[#15345b]">TronSabak</p><p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#71809a]">Learning platform</p></div>
+            <div><p className="text-lg font-bold tracking-tight text-[#15345b]">UniCore</p><p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#71809a]">Learning platform</p></div>
           </div>
           <nav aria-label="Primary navigation" className="hidden items-center gap-7 md:flex">
             <a href="#home" className="text-[15px] font-semibold text-[#345477] transition hover:text-[#15345b]">Home</a>
@@ -65,10 +65,10 @@ export default function Home() {
           </div>
         </header>
 
-        <section id="home" aria-label="About TronSabak" className="group relative mt-6 aspect-[16/8] min-h-[330px] overflow-hidden rounded-2xl shadow-xl shadow-[#29486a]/10 sm:aspect-[16/7] sm:min-h-0">
+        <section id="home" aria-label="About UniCore" className="group relative mt-6 aspect-[16/8] min-h-[330px] overflow-hidden rounded-2xl shadow-xl shadow-[#29486a]/10 sm:aspect-[16/7] sm:min-h-0">
           <div className="absolute inset-0 bg-cover bg-center transition-all duration-700" style={{ backgroundImage: `url(${currentPhotoSlide.image})` }}>
             <div className="absolute inset-0 bg-gradient-to-r from-[#0d2747]/90 via-[#173d63]/65 to-[#173d63]/15" />
-            <div className="relative flex h-full max-w-xl flex-col justify-center px-7 text-white sm:px-12"><p className="mb-3 text-[10px] font-bold uppercase tracking-[0.24em] text-[#b9d7f2]">TronSabak / Student life</p><h2 className="max-w-md text-3xl font-semibold leading-tight tracking-[-0.03em] sm:text-5xl">{currentPhotoSlide.title}</h2><p className="mt-4 max-w-sm text-sm leading-6 text-blue-50/85 sm:text-base">{currentPhotoSlide.description}</p></div>
+            <div className="relative flex h-full max-w-xl flex-col justify-center px-7 text-white sm:px-12"><p className="mb-3 text-[10px] font-bold uppercase tracking-[0.24em] text-[#b9d7f2]">UniCore / Student life</p><h2 className="max-w-md text-3xl font-semibold leading-tight tracking-[-0.03em] sm:text-5xl">{currentPhotoSlide.title}</h2><p className="mt-4 max-w-sm text-sm leading-6 text-blue-50/85 sm:text-base">{currentPhotoSlide.description}</p></div>
           </div>
           <button type="button" aria-label="Previous slide" onClick={() => changePhotoSlide(-1)} className="absolute left-4 top-1/2 z-10 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-white/30 bg-black/20 text-white opacity-0 backdrop-blur transition hover:bg-black/40 group-hover:opacity-100 focus:opacity-100 focus:outline-none focus:ring-2 focus:ring-white/80"><ChevronLeft size={19} /></button>
           <button type="button" aria-label="Next slide" onClick={() => changePhotoSlide(1)} className="absolute right-4 top-1/2 z-10 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-white/30 bg-black/20 text-white opacity-0 backdrop-blur transition hover:bg-black/40 group-hover:opacity-100 focus:opacity-100 focus:outline-none focus:ring-2 focus:ring-white/80"><ChevronRight size={19} /></button>

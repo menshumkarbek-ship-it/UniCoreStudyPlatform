@@ -1,0 +1,168 @@
+{
+  "common": {
+    "appName": "UniCore",
+    "nav": {
+      "home": "Башкы бет",
+      "subjects": "Сабактар",
+      "homework": "Үй тапшырмалар",
+      "timetable": "Сабак кестеси",
+      "dashboard": "Башкы панель",
+      "profile": "Профиль"
+    },
+    "menu": {
+      "menu": "Меню"
+    },
+    "notifications": {
+      "title": "Latest notifications",
+      "markAllRead": "Mark all read",
+      "openNotifications": "Open notifications"
+    },
+    "actions": {
+      "signOut": "Чыгуу",
+      "save": "Сактоо",
+      "cancel": "Жокко чыгаруу",
+      "edit": "Өзгөртүү",
+      "delete": "Өчүрүү",
+      "addRecord": "Жазуу кошуу",
+      "create": "Түзүү"
+    },
+    "language": {
+      "en": "English",
+      "ru": "Орусча",
+      "ky": "Кыргызча",
+      "chooseLanguage": "Тилди тандаңыз"
+    },
+    "footer": {
+      "tagline": "Making Teaching and Learning Easier",
+      "useCases": "Use Cases",
+      "aboutUs": "Биз жөнүндө",
+      "officialWebsite": "Расмий сайт",
+      "app": "APP",
+      "scanQr": "Scan to open the mobile portal",
+      "useCaseItems": {
+        "blendedLearning": "Blended Learning",
+        "app": "APP",
+        "moocs": "MOOCs/SPOCs Module",
+        "business": "UniCore for Business"
+      }
+    },
+    "misc": {
+      "loading": "Loading time...",
+      "connectedReady": "Connected and ready",
+      "refreshing": "Refreshing..."
+    }
+  },
+  "auth": {
+    "welcomeBack": "Кайра кош келиңиз",
+    "chooseRole": "Choose your role to open the learning workspace.",
+    "demoAccountLabel": "Shared demo account",
+    "demoIdLabel": "ID",
+    "demoPasswordLabel": "Сыр сөз",
+    "universityLabel": "Университет",
+    "universitySearchPlaceholder": "Search your university",
+    "noUniversitiesFound": "No universities found.",
+    "identifierLabel": "Email же аккаунт ID",
+    "identifierPlaceholder": "Enter your account email",
+    "passwordLabel": "Сыр сөз",
+    "passwordPlaceholder": "Enter any demo password",
+    "loginAsAdmin": "Администратор катары кирүү",
+    "opening": "Ачылууда...",
+    "student": "Студент",
+    "professor": "Профессор",
+    "demoModeNotice": "Demo mode: credentials are used only for local validation.",
+    "errorMissingFields": "Enter your demo ID and password to continue.",
+    "errorMissingUniversity": "Choose your university before continuing.",
+    "errorGeneric": "Unable to sign in right now.",
+    "errorUnreachable": "Unable to reach the authentication service."
+  },
+  "dashboard": {
+    "university": "Университет",
+    "today": "Бүгүн",
+    "localDateTime": "Local date and time",
+    "facultyOfMedicine": "Медицина факультети",
+    "latestNotifications": "Latest notifications",
+    "notificationsSubtitle": "Course updates and university messages.",
+    "todoList": "Иштер тизмеси",
+    "todoSubtitle": "Closest homework deadlines.",
+    "viewAllHomework": "View all homework",
+    "quickAccess": "Ыкчам кирүү",
+    "assignments": "Тапшырмалар",
+    "exams": "Экзамендер",
+    "studentAccount": "Студент аккаунту",
+    "professorAccount": "Профессор аккаунту",
+    "departmentOfMedicalSciences": "Department of Medical Sciences",
+    "teachingFaculty": "Teaching faculty",
+    "students": "Студенттер",
+    "teachingOverview": "Teaching overview",
+    "myCourses": "Менин курстарым",
+    "myCoursesSubtitle": "Subjects and groups currently assigned to you.",
+    "professorWorkspace": "Professor workspace",
+    "homeworkGiven": "Берилген үй тапшырмалар",
+    "homeworkGivenSubtitle": "Track assignments for your groups.",
+    "createNewAssignment": "Create new assignment",
+    "mySubjects": "Менин сабактарым",
+    "myTimetable": "Менин кестем",
+    "groupsLabel": "Топтор",
+    "studentsSuffix": "students",
+    "dueLabel": "Due",
+    "submittedOf": "{submitted} of {total} submitted",
+    "openAdministratorProfile": "Open administrator profile"
+  },
+  "admin": {
+    "title": "Manage your data",
+    "eyebrow": "Administrator workspace",
+    "description": "Manage universities, faculties, people, subjects, groups, enrollments, assignments, and timetable entries.",
+    "models": "Models",
+    "createFormNotice": "Create records using the resource form.",
+    "recordDeleted": "Record deleted.",
+    "confirmDelete": "Delete this record? Related records may also be removed.",
+    "record": "Record",
+    "university": "Университет",
+    "details": "Details",
+    "actions": "Actions",
+    "records_forms": ["record", "records", "records"],
+    "resources": {
+      "universities": "Университеттер",
+      "faculties": "Факультеттер",
+      "professors": "Профессорлор",
+      "subjects": "Сабактар",
+      "students": "Студенттер",
+      "groups": "Топтор",
+      "enrollments": "Student enrollments",
+      "teachingAssignments": "Teaching assignments",
+      "timetable": "Сабак кестеси"
+    }
+  },
+  "subjects": {
+    "academicCatalog": "Academic catalog",
+    "teachingCatalog": "Teaching catalog"
+  },
+  "homework": {
+    "quickAccess": "Ыкчам кирүү",
+    "publishHomework": "Publish homework",
+    "submitted": "Тапшырылды",
+    "needsAttention": "Needs attention",
+    "task_forms": ["тапшырма", "тапшырма", "тапшырма"]
+  },
+  "timetable": {
+    "teachingSchedule": "Teaching schedule",
+    "classSchedule": "Class schedule"
+  },
+  "profile": {
+    "studentAccount": "Студент аккаунту",
+    "title": "Profile & settings",
+    "subtitle": "Manage your personal information and account preferences.",
+    "profilePhoto": "Profile photo",
+    "personalInformation": "Personal information",
+    "security": "Коопсуздук"
+  },
+  "landing": {
+    "tagline": "Learning platform",
+    "courseAccess": "Course Access",
+    "courseAccessDescription": "Find lectures, reading materials, and learning resources organized for every class.",
+    "assignmentHub": "Assignment Hub",
+    "assignmentHubDescription": "Submit work, follow deadlines, and keep every academic task moving forward.",
+    "progressInsights": "Progress Insights",
+    "progressInsightsDescription": "See grades, milestones, and a clear picture of your growth throughout the term."
+  }
+}

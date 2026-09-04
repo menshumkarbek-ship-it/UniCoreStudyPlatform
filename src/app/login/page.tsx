@@ -62,7 +62,7 @@ export default function LoginPage() {
   return (
     <main className="flex min-h-screen items-center justify-center bg-[#f4f7fb] px-5 py-10 text-[#17233d]">
       <section className="w-full max-w-md rounded-2xl border border-white bg-white p-6 shadow-[0_22px_70px_rgba(43,69,105,0.14)] sm:p-9">
-        <Link href="/" className="mb-8 flex items-center gap-3"><span className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#15345b] text-white"><GraduationCap size={22} /></span><span className="text-lg font-bold text-[#15345b]">TronSabak</span></Link>
+        <Link href="/" className="mb-8 flex items-center gap-3"><span className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#15345b] text-white"><GraduationCap size={22} /></span><span className="text-lg font-bold text-[#15345b]">UniCore</span></Link>
         <h1 className="text-2xl font-semibold text-[#172b49]">Welcome back</h1>
         <p className="mt-2 text-sm text-[#71809a]">Choose your role to open the learning workspace.</p>
         <div className="mt-6 rounded-lg border border-cyan-100 bg-cyan-50/60 px-3 py-2.5 text-xs text-[#527397]"><p className="font-bold text-[#285982]">Shared demo account</p><p className="mt-1">ID: <span className="font-mono">{demoAccount.id}</span></p><p>Password: <span className="font-mono">{demoAccount.password}</span></p></div>
