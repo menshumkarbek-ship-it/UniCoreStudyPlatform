@@ -2,39 +2,44 @@
 
 /* eslint-disable react/no-unescaped-entities */
 
-import { useEffect, useState, useSyncExternalStore } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
-import Footer from "@/components/Footer";
 import MenuDropdown from "@/components/MenuDropdown";
 import ProfessorWorkspace from "@/components/ProfessorWorkspace";
 import { BarChart3, BookOpen, CalendarCheck, CircleUserRound, ClipboardList, FileUp, GraduationCap, LayoutDashboard, LogOut, Plus, Users, CalendarDays } from "lucide-react";
 import { useDictionary } from "@/i18n/locale-provider";
 
 type Role = "student" | "professor" | "admin";
-type Course = { code: string; title: string; professor: string; students: number };
-
-const getUniversity = () => window.localStorage.getItem("tronsabak-university") ?? "Ala-Too International University";
-
-const courses: Course[] = [
-  { code: "MED101", title: "Human Anatomy", professor: "Dr. A. Karimov", students: 32 },
-  { code: "MED112", title: "Human Physiology", professor: "Dr. M. Sadykova", students: 30 },
-  { code: "MED203", title: "Medical Biochemistry", professor: "Prof. B. Ergeshov", students: 28 },
-  { code: "MED216", title: "Medical Microbiology", professor: "Dr. N. Isaeva", students: 27 },
-  { code: "MED301", title: "Public Health & Epidemiology", professor: "Prof. E. Tursunov", students: 24 },
-];
+type StudentProfile = { universityName: string; email: string; studentId: string | null; groups: { name: string; facultyName: string | null }[] };
+type DashboardNotification = { id: number; title: string; detail: string; href: string; readAt: string | null; createdAt: string };
 
 export default function Dashboard() {
   const [role, setRole] = useState<Role>("student");
-  const [course] = useState(courses[0]);
   const [profilePhoto, setProfilePhoto] = useState<string | null>(null);
-  const university = useSyncExternalStore(() => () => undefined, getUniversity, () => "Ala-Too International University");
+  const [accountName, setAccountName] = useState("");
+  const [studentProfile, setStudentProfile] = useState<StudentProfile | null>(null);
+  const [notifications, setNotifications] = useState<DashboardNotification[]>([]);
   const [currentDateTime, setCurrentDateTime] = useState("");
   const dict = useDictionary();
 
   useEffect(() => {
-    const savedRole = window.localStorage.getItem("tronsabak-role");
-    if (savedRole === "professor" || savedRole === "admin") setRole(savedRole);
-    setProfilePhoto(window.localStorage.getItem("tronsabak-profile-photo"));
+    void fetch("/api/auth/session").then(async (response) => {
+      if (!response.ok) return;
+      const result = await response.json() as { user?: { fullName?: string; role?: Role; profilePhoto?: string | null } };
+      if (result.user?.role) setRole(result.user.role);
+      setAccountName(result.user?.fullName ?? "");
+      setProfilePhoto(result.user?.profilePhoto ?? null);
+    });
+    void fetch("/api/student/profile").then(async (response) => {
+      if (!response.ok) return;
+      const result = await response.json() as { user?: Omit<StudentProfile, "groups">; groups?: StudentProfile["groups"] };
+      if (result.user) setStudentProfile({ ...result.user, groups: result.groups ?? [] });
+    });
+    window.setTimeout(() => void fetch("/api/notifications").then(async (response) => {
+      if (!response.ok) return;
+      const result = await response.json() as { notifications?: DashboardNotification[] };
+      setNotifications(result.notifications ?? []);
+    }), 0);
 
     const updateDateTime = () => setCurrentDateTime(new Intl.DateTimeFormat("en-US", { weekday: "long", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }).format(new Date()));
     updateDateTime();
@@ -42,7 +47,7 @@ export default function Dashboard() {
     return () => window.clearInterval(clock);
   }, []);
 
-  if (role === "professor") return <ProfessorWorkspace currentDateTime={currentDateTime} profilePhoto={profilePhoto} />;
+  if (role === "professor") return <ProfessorWorkspace currentDateTime={currentDateTime} profilePhoto={profilePhoto} accountName={accountName} />;
 
   return (
     <main className="min-h-screen bg-[#f4f7fb] text-[#17233d]">
@@ -50,33 +55,34 @@ export default function Dashboard() {
       <header className="border-b border-slate-200 bg-white px-5 py-4 sm:px-8">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-4">
           <Link href="/" className="flex items-center gap-3"><span className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#15345b] text-white"><BookOpen size={21} /></span><span className="text-lg font-bold text-[#15345b]">{dict.common.appName}</span></Link>
-          <div className="flex items-center gap-5"><nav className="hidden items-center gap-6 md:flex"><MenuDropdown />{role === "student" && <Link href="/profile" className="text-sm font-semibold text-cyan-700 hover:text-cyan-900">Aibek Temirov</Link>}</nav>{role === "student" && <Link href="/profile" aria-label={dict.dashboard.openStudentProfile} className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full border-2 border-cyan-100 bg-cyan-50 text-xs font-bold text-cyan-700 transition hover:border-cyan-300 hover:bg-cyan-100"><span className="sr-only">{dict.dashboard.studentProfileSrOnly}</span>{profilePhoto ? <img src={profilePhoto} alt="" className="h-full w-full object-cover" /> : <CircleUserRound size={21} />}</Link>}</div>
+          <div className="flex items-center gap-5"><nav className="hidden items-center gap-6 md:flex"><MenuDropdown />{role === "student" && <Link href="/profile" className="text-sm font-semibold text-cyan-700 hover:text-cyan-900">{accountName}</Link>}</nav>{role === "student" && <Link href="/profile" aria-label={dict.dashboard.openStudentProfile} className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full border-2 border-cyan-100 bg-cyan-50 text-xs font-bold text-cyan-700 transition hover:border-cyan-300 hover:bg-cyan-100"><span className="sr-only">{dict.dashboard.studentProfileSrOnly}</span>{profilePhoto ? <img src={profilePhoto} alt="" className="h-full w-full object-cover" /> : <CircleUserRound size={21} />}</Link>}</div>
         </div>
       </header>
 
       <div className="mx-auto max-w-7xl px-5 py-8 sm:px-8">
         <div className="grid gap-5 lg:grid-cols-[220px_minmax(0,1fr)] lg:items-start">
           <aside className="rounded-xl border border-white bg-white p-4 shadow-sm lg:self-stretch">
-            <ProfileSummary name="Aibek Temirov" role={dict.auth.student} photo={profilePhoto} />
+            <ProfileSummary name={accountName} role={role === "professor" ? dict.auth.professor : role === "admin" ? "Administrator" : dict.auth.student} photo={profilePhoto} />
             <p className="mb-3 text-xs font-bold uppercase tracking-[0.16em] text-slate-400">{dict.dashboard.quickAccess}</p>
             <nav className="space-y-1" aria-label="Workspace sections"><Link href="/subjects" className="block rounded-lg bg-cyan-50 px-3 py-2.5 text-sm font-semibold text-cyan-700">{dict.common.nav.subjects}</Link><Link href="/homework" className="block rounded-lg px-3 py-2.5 text-sm font-medium text-slate-500 hover:bg-slate-50 hover:text-slate-800">{dict.common.nav.homework}</Link><Link href="/timetable" className="block rounded-lg px-3 py-2.5 text-sm font-medium text-slate-500 hover:bg-slate-50 hover:text-slate-800">{dict.common.nav.timetable}</Link><a href="#assignments" className="block rounded-lg px-3 py-2.5 text-sm font-medium text-slate-500 hover:bg-slate-50 hover:text-slate-800">{dict.dashboard.assignments}</a><a href="#exams" className="block rounded-lg px-3 py-2.5 text-sm font-medium text-slate-500 hover:bg-slate-50 hover:text-slate-800">{dict.dashboard.exams}</a><Link href="/profile" className="block rounded-lg px-3 py-2.5 text-sm font-medium text-slate-500 hover:bg-slate-50 hover:text-slate-800">{dict.common.nav.profile}</Link></nav>
             <div className="mt-8 border-t border-slate-100 pt-5">
               <p className="text-xs font-bold uppercase tracking-[0.14em] text-slate-400">{dict.dashboard.studentAccount}</p>
-              <p className="mt-3 text-sm font-semibold text-slate-700">{dict.dashboard.facultyOfMedicine}</p>
+              <p className="mt-3 text-sm font-semibold text-slate-700">{studentProfile?.groups[0]?.facultyName ?? "Faculty not assigned"}</p>
+              <p className="mt-1 text-xs text-slate-400">{studentProfile?.groups.map((group) => group.name).join(", ") || "Group not assigned"}</p>
               <Link href="/login" className="mt-5 flex items-center gap-2 text-xs font-semibold text-slate-500 hover:text-red-600"><LogOut size={14} /> {dict.common.actions.signOut}</Link>
             </div>
           </aside>
 
           <div className="flex flex-col gap-5">
             <div className="grid gap-6 md:grid-cols-2">
-              <Stat icon={BookOpen} label={dict.dashboard.university} value={university} detail={dict.dashboard.facultyOfMedicine} />
+              <Stat icon={BookOpen} label={dict.dashboard.university} value={studentProfile?.universityName ?? dict.common.misc.loading} detail={studentProfile?.groups[0]?.facultyName ?? "Faculty not assigned"} />
               <Stat icon={CalendarCheck} label={dict.dashboard.today} value={currentDateTime || dict.common.misc.loading} detail={dict.dashboard.localDateTime} />
             </div>
 
             <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_320px] lg:items-stretch">
               <section className="flex min-h-[560px] flex-col rounded-xl border border-white bg-white p-5 shadow-sm">
                 <div className="flex items-center justify-between"><div><h2 className="font-semibold text-slate-800">{dict.dashboard.latestNotifications}</h2><p className="mt-1 text-sm text-slate-500">{dict.dashboard.notificationsSubtitle}</p></div><span className="h-2 w-2 rounded-full bg-cyan-500" /></div>
-                <div className="mt-4 flex flex-1 flex-col justify-between gap-3"><p className="rounded-lg bg-cyan-50/70 p-3 text-xs leading-5 text-slate-600"><b className="block text-cyan-800">New presentation</b>Lecture materials added to {course.code}.</p><p id="assignments" className="rounded-lg bg-amber-50/70 p-3 text-xs leading-5 text-slate-600"><b className="block text-amber-800">Assignment reminder</b>Case Study 04 is due tomorrow.</p><p id="exams" className="rounded-lg bg-emerald-50/70 p-3 text-xs leading-5 text-slate-600"><b className="block text-emerald-800">Exam schedule</b>Midterm review opens next week.</p><p className="rounded-lg bg-indigo-50/70 p-3 text-xs leading-5 text-slate-600"><b className="block text-indigo-800">Faculty announcement</b>Faculty orientation meeting is Friday at 14:00.</p><p className="rounded-lg bg-sky-50/70 p-3 text-xs leading-5 text-slate-600"><b className="block text-sky-800">Group update</b>Your MED-24A group timetable has been updated.</p><p className="rounded-lg bg-rose-50/70 p-3 text-xs leading-5 text-slate-600"><b className="block text-rose-800">Submission received</b>Your latest homework submission was received successfully.</p></div>
+                <div className="mt-4 flex-1">{notifications.length ? <div className="max-h-[560px] space-y-2 overflow-y-auto pr-1">{notifications.slice(0, 20).map((notification) => <Link href={notification.href} key={notification.id} className={`block rounded-lg border border-slate-100 px-3 py-3 hover:border-cyan-200 hover:bg-cyan-50/40 ${!notification.readAt ? "bg-cyan-50/40" : ""}`}><div className="flex items-start justify-between gap-3"><p className="text-sm font-semibold text-slate-700">{notification.title}</p><time className="shrink-0 text-[11px] text-slate-400">{new Date(notification.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}</time></div><p className="mt-1 text-xs leading-4 text-slate-500">{notification.detail}</p></Link>)}</div> : <div className="flex h-full items-center justify-center"><p className="rounded-lg border border-dashed border-slate-200 p-6 text-center text-xs text-slate-400">No notifications yet.</p></div>}</div>
               </section>
 
               <div className="flex justify-end lg:pt-0">
@@ -86,7 +92,6 @@ export default function Dashboard() {
           </div>
         </div>
       </div>
-      <Footer />
     </main>
   );
 }
@@ -114,9 +119,22 @@ function Stat({ icon: Icon, label, value, detail }: { icon: typeof BookOpen; lab
 
 function ProfileSummary({ name, role, photo }: { name: string; role: string; photo: string | null }) { return <div className="mb-5 flex flex-col items-center border-b border-slate-100 pb-5 text-center"><div className="flex h-24 w-24 items-center justify-center overflow-hidden rounded-full bg-cyan-100 text-cyan-700 ring-4 ring-cyan-50">{photo ? <img src={photo} alt={`${name} profile`} className="h-full w-full object-cover" /> : <CircleUserRound size={43} />}</div><p className="mt-3 max-w-full truncate text-sm font-bold text-slate-700">{name}</p><p className="mt-1 text-xs text-slate-400">{role}</p></div>; }
 
+type TodoItem = { id: number; title: string; course: string; group: string; dueAt: string; href: string; kind: "homework" | "exam" };
+
 function TodoList() {
-  const items = [{ title: "Enzyme kinetics worksheet", course: "MED203", due: "Due tomorrow", urgent: true }, { title: "Cardiovascular case study", course: "MED101", due: "Due Sep 8", urgent: false }, { title: "Respiratory physiology notes", course: "MED112", due: "Due Sep 11", urgent: false }];
   const dict = useDictionary();
+  const [items, setItems] = useState<TodoItem[]>([]);
+
+  useEffect(() => {
+    void Promise.all([fetch("/api/homework"), fetch("/api/exams")]).then(async ([homeworkResponse, examsResponse]) => {
+      const homeworkResult = homeworkResponse.ok ? await homeworkResponse.json() as { homework?: { id: number; title: string; course_code: string; group_name: string; due_at: string; status?: "open" | "submitted" }[] } : {};
+      const examsResult = examsResponse.ok ? await examsResponse.json() as { exams?: { id: number; title: string; code: string; groupName: string; examDate: string; startsAt: string }[] } : {};
+      const homeworkItems = (homeworkResult.homework ?? []).filter((item) => item.status !== "submitted").map((item) => ({ id: item.id, title: item.title, course: item.course_code, group: item.group_name, dueAt: item.due_at, href: "/homework", kind: "homework" as const }));
+      const examItems = (examsResult.exams ?? []).map((exam) => ({ id: exam.id, title: exam.title, course: exam.code, group: exam.groupName, dueAt: `${exam.examDate}T${exam.startsAt}`, href: "/exams", kind: "exam" as const })).filter((item) => new Date(item.dueAt).getTime() >= Date.now());
+      setItems([...homeworkItems, ...examItems].sort((first, second) => new Date(first.dueAt).getTime() - new Date(second.dueAt).getTime()).slice(0, 5));
+    });
+  }, []);
+
   return (
     <section className="h-full w-[320px] rounded-xl border border-white bg-white p-5 shadow-sm">
       <div className="flex items-center justify-between">
@@ -127,23 +145,7 @@ function TodoList() {
         <ClipboardList size={20} className="text-cyan-600" />
       </div>
 
-      <div className="mt-4 flex h-[calc(100%-5.25rem)] flex-col">
-        <div className="space-y-3">
-          {items.map((item) => (
-            <Link key={item.title} href="/homework" className="block rounded-lg border border-slate-100 p-3 transition hover:border-cyan-300 hover:bg-cyan-50/40">
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <span className="text-[11px] font-bold text-cyan-700">{item.course}</span>
-                  <p className="mt-1 text-sm font-semibold text-slate-700">{item.title}</p>
-                </div>
-                <span className={`shrink-0 text-[11px] font-bold ${item.urgent ? "text-amber-600" : "text-slate-400"}`}>{item.due}</span>
-              </div>
-            </Link>
-          ))}
-        </div>
-
-        <Link href="/homework" className="mt-auto pt-4 text-xs font-bold text-cyan-700 hover:text-cyan-900">{dict.dashboard.viewAllHomework}</Link>
-      </div>
+      {items.length === 0 ? <div className="mt-4 flex min-h-32 items-center justify-center"><p className="rounded-lg border border-dashed border-slate-200 p-6 text-center text-xs text-slate-400">No tasks yet.</p></div> : <div className="mt-4 space-y-2">{items.map((item) => { const dueAt = new Date(item.dueAt); const overdue = item.kind === "homework" && dueAt.getTime() < Date.now(); return <Link href={item.href} key={`${item.kind}-${item.id}`} className="block rounded-lg border border-slate-100 px-3 py-3 transition hover:border-cyan-200 hover:bg-cyan-50/40"><p className="truncate text-sm font-semibold text-slate-700">{item.title}</p><p className="mt-1 truncate text-xs text-slate-400">{item.course} · {item.group}</p><p className={`mt-2 text-xs font-bold ${item.kind === "exam" ? "text-cyan-700" : overdue ? "text-red-600" : "text-amber-600"}`}>{item.kind === "exam" ? "Upcoming Exam" : overdue ? "Overdue" : `Due ${dueAt.toLocaleDateString("en-US", { month: "short", day: "numeric" })}`}</p></Link>; })}</div>}
     </section>
   );
 }

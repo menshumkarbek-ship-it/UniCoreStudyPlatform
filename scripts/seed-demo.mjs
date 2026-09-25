@@ -3,17 +3,8 @@ const database = new DatabaseSync("data/tronsabak.sqlite");
 const university = database.prepare("SELECT id FROM universities WHERE name = ?").get("Ala-Too International University");
 if (!university) throw new Error("Initialize the app or call /api/universities before seeding.");
 const universityId = university.id;
-const professor = database.prepare("SELECT id FROM users WHERE university_id = ? AND role = 'professor' ORDER BY id LIMIT 1").get(universityId);
+const professor = database.prepare("SELECT id FROM users WHERE university_id = ? AND role = 'professor' LIMIT 1").get(universityId);
 const student = database.prepare("SELECT id FROM users WHERE university_id = ? AND role = 'student' LIMIT 1").get(universityId);
-const professors = [
-  ["professor@tronsabak.dev", "Dr. A. Karimov"],
-  ["professor2@tronsabak.dev", "Prof. B. Sulaimanova"],
-  ["professor3@tronsabak.dev", "Dr. N. Toktonaliev"],
-  ["professor4@tronsabak.dev", "Prof. M. Abdykadyrov"]
-];
-for (const [email, fullName] of professors) {
-  database.prepare("INSERT OR IGNORE INTO users (university_id, email, full_name, password_hash, role) VALUES (?, ?, ?, ?, 'professor')").run(universityId, email, fullName, hashSync("Professor123!", 12));
-}
 const courses = [["MED101", "Human Anatomy"], ["MED112", "Human Physiology"], ["MED203", "Medical Biochemistry"]];
 const groups = ["MED-24A", "MED-24B", "MED-23B"];
 for (const [code, title] of courses) database.prepare("INSERT OR IGNORE INTO courses (university_id, code, title) VALUES (?, ?, ?)").run(universityId, code, title);

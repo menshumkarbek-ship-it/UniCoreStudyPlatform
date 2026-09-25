@@ -4,6 +4,8 @@ import { cookies } from "next/headers";
 import { defaultLocale, isLocale, localeCookieName } from "@/i18n/config";
 import { getDictionary } from "@/i18n/get-dictionary";
 import { LocaleProvider } from "@/i18n/locale-provider";
+import ProfessorNavigation from "@/components/ProfessorNavigation";
+import RouteThemeToggle from "@/components/RouteThemeToggle";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -34,7 +36,8 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
     >
       <body className="min-h-full flex flex-col">
         <LocaleProvider locale={locale} dict={dict}>
-          {children}
+          <RouteThemeToggle />
+          <ProfessorNavigation>{children}</ProfessorNavigation>
         </LocaleProvider>
       </body>
     </html>

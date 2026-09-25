@@ -18,17 +18,16 @@ export async function POST(request: Request) {
   if (!parsed.success) return NextResponse.json({ error: "Enter a valid university, ID, and password." }, { status: 400 });
   const { identifier, password, universityName, role } = parsed.data;
   const database = getDatabase();
-  const university = universityName
-    ? database.prepare("SELECT id, name, city FROM universities WHERE name = ? COLLATE NOCASE").get(universityName) as { id: number; name: string; city: string } | undefined
-    : role === "admin"
-      ? database.prepare("SELECT universities.id, universities.name, universities.city FROM universities JOIN users ON users.university_id = universities.id WHERE users.role = 'admin' AND (users.email = ? OR users.email = 'admin@tronsabak.dev') LIMIT 1").get(identifier.toLowerCase()) as { id: number; name: string; city: string } | undefined
-      : undefined;
-  if (!university) return NextResponse.json({ error: "That university is not available." }, { status: 404 });
-  const user = database.prepare("SELECT id, university_id, email, full_name, password_hash, role FROM users WHERE university_id = ? AND email = ? AND role = ?").get(university.id, identifier.toLowerCase(), role) as { id: number; university_id: number; email: string; full_name: string; password_hash: string; role: "student" | "professor" | "admin" } | undefined;
-  const demoStudentFallback = role === "student" && identifier.toLowerCase() === "professor@tronsabak.dev" ? database.prepare("SELECT id, university_id, email, full_name, password_hash, role FROM users WHERE university_id = ? AND role = 'student' LIMIT 1").get(university.id) as typeof user : undefined;
-  const demoAdminFallback = role === "admin" && identifier.toLowerCase() === "professor@tronsabak.dev" ? database.prepare("SELECT id, university_id, email, full_name, password_hash, role FROM users WHERE university_id = ? AND role = 'admin' LIMIT 1").get(university.id) as typeof user : undefined;
-  const authenticatedUser = user ?? demoStudentFallback ?? demoAdminFallback;
-  if (!authenticatedUser || authenticatedUser.role !== role || !compareSync(password, authenticatedUser.password_hash)) return NextResponse.json({ error: "Those credentials do not match this university and role." }, { status: 401 });
+  const userSelect = "SELECT id, university_id, email, full_name, password_hash, role FROM users";
+  const user = role === "admin"
+    ? database.prepare(`${userSelect} WHERE email = ? AND role = 'admin'`).get(identifier.toLowerCase())
+    : database.prepare(`${userSelect} WHERE university_id = (SELECT id FROM universities WHERE name = ? COLLATE NOCASE) AND (email = ? OR (role = 'student' AND student_id = ?)) AND role = ?`).get(universityName, identifier.toLowerCase(), identifier, role);
+  const authenticatedUser = user;
+  if (!authenticatedUser && role !== "admin" && !universityName) return NextResponse.json({ error: "Choose your university." }, { status: 400 });
+  if (!authenticatedUser || authenticatedUser.role !== role || !compareSync(password, authenticatedUser.password_hash)) {
+    return NextResponse.json({ error: role === "admin" ? "Those administrator credentials are incorrect." : "Those credentials do not match this university and role." }, { status: 401 });
+  }
   await createSession({ userId: authenticatedUser.id, universityId: authenticatedUser.university_id, role: authenticatedUser.role, email: authenticatedUser.email, fullName: authenticatedUser.full_name });
+  const university = database.prepare("SELECT id, name, city FROM universities WHERE id = ?").get(authenticatedUser.university_id);
   return NextResponse.json({ user: { email: authenticatedUser.email, fullName: authenticatedUser.full_name, role: authenticatedUser.role }, university });
 }

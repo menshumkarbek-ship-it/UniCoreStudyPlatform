@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import DeviceShowcase from "@/components/DeviceShowcase";
 import Footer from "@/components/Footer";
+import ThemeToggle from "@/components/ThemeToggle";
 import {
   BookOpen,
   ChevronLeft,
@@ -41,8 +42,6 @@ export default function Home() {
 
   return (
     <main className="relative min-h-screen overflow-hidden bg-[#f4f7fb] text-[#17233d]">
-      <div className="pointer-events-none absolute -left-32 -top-36 h-[520px] w-[520px] rounded-full bg-[#dce9f8] opacity-70 blur-3xl" />
-      <div className="pointer-events-none absolute -bottom-48 right-[-100px] h-[500px] w-[500px] rounded-full bg-[#e5edf5] opacity-80 blur-3xl" />
       <div className="relative mx-auto flex min-h-screen max-w-[1440px] flex-col px-5 py-6 sm:px-8 lg:px-12">
         <header className="flex items-center justify-between rounded-2xl border border-white/80 bg-white/60 px-4 py-3 shadow-sm backdrop-blur sm:px-5">
           <div className="flex items-center gap-3">
@@ -55,6 +54,7 @@ export default function Home() {
             <a href="#app" className="text-[15px] font-medium text-[#71809a] transition hover:text-[#15345b]">App</a>
           </nav>
           <div className="flex items-center gap-2 sm:gap-3">
+            <ThemeToggle />
             <label className="flex items-center gap-1.5 rounded-lg border border-[#d7e1ec] bg-white/70 px-2 py-2 text-[#527397]" aria-label="Choose language">
               <Globe2 size={15} />
               <select value={language} onChange={(event) => setLanguage(event.target.value)} className="cursor-pointer bg-transparent text-[11px] font-bold text-[#3d5b7c] outline-none">

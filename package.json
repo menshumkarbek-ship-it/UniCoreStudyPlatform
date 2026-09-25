@@ -8,10 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "db:check": "node scripts/check-db.mjs",
-    "db:migrate": "node scripts/migrate-db.mjs",
-    "db:seed": "node scripts/seed-demo.mjs",
-    "admin:create": "node scripts/create-admin.mjs",
-    "i18n:check": "node scripts/check-i18n-keys.mjs"
+    "db:seed": "node scripts/seed-demo.mjs"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",

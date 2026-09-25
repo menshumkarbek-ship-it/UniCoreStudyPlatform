@@ -1,29 +1,346 @@
 "use client";
 
 import Link from "next/link";
-import { BookOpen, CalendarCheck, CalendarDays, CircleUserRound, ClipboardList, GraduationCap, LayoutDashboard, LogOut, Plus } from "lucide-react";
+import { useEffect, useState } from "react";
+import {
+  BookOpen,
+  CalendarCheck,
+  CalendarDays,
+  CircleUserRound,
+  ClipboardList,
+  GraduationCap,
+  LayoutDashboard,
+  LogOut,
+  Plus,
+} from "lucide-react";
 import Footer from "@/components/Footer";
 import { useDictionary } from "@/i18n/locale-provider";
 import MenuDropdown from "@/components/MenuDropdown";
 
-type Course = { code: string; title: string; groups: string; students: number };
-type Homework = { title: string; course: string; group: string; submitted: number; total: number; due: string };
-const courses: Course[] = [
-  { code: "MED101", title: "Human Anatomy", groups: "MED-24A, MED-24B", students: 56 },
-  { code: "MED112", title: "Human Physiology", groups: "MED-24B", students: 18 },
-  { code: "MED203", title: "Medical Biochemistry", groups: "MED-23B", students: 13 }
-];
-const homework: Homework[] = [
-  { title: "Cardiovascular case study", course: "MED101", group: "MED-24A", submitted: 24, total: 32, due: "Sep 8" },
-  { title: "Respiratory physiology notes", course: "MED112", group: "MED-24B", submitted: 11, total: 18, due: "Sep 11" },
-  { title: "Enzyme kinetics worksheet", course: "MED203", group: "MED-23B", submitted: 8, total: 13, due: "Sep 5" }
-];
-
-export default function ProfessorWorkspace({ currentDateTime, profilePhoto }: { currentDateTime: string; profilePhoto: string | null }) {
+type Course = { id: number; code: string; title: string; facultyName: string | null; group_names: string; student_count: number };
+type Homework = {
+  id: number;
+  title: string;
+  course_code: string;
+  group_name: string;
+  due_at: string;
+  submitted_count: number;
+};
+export default function ProfessorWorkspace({
+  currentDateTime,
+  profilePhoto,
+  accountName,
+}: {
+  currentDateTime: string;
+  profilePhoto: string | null;
+  accountName: string;
+}) {
   const dict = useDictionary();
-  return <main className="min-h-screen bg-[#f4f7fb] text-[#17233d]"><header className="border-b border-slate-200 bg-white px-5 py-4 sm:px-8"><div className="mx-auto flex max-w-7xl items-center justify-between gap-4"><Link href="/" className="flex items-center gap-3"><span className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#15345b] text-white"><GraduationCap size={21} /></span><span className="text-lg font-bold text-[#15345b]">{dict.common.appName}</span></Link><div className="flex items-center gap-5"><nav className="hidden items-center gap-6 md:flex"><MenuDropdown /></nav><span className="hidden text-sm font-semibold text-cyan-700 sm:inline">Dr. A. Karimov</span><Link href="/profile" aria-label={dict.dashboard.openProfessorProfile} className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full border-2 border-cyan-100 bg-cyan-50 text-cyan-700">{profilePhoto ? <img src={profilePhoto} alt="" className="h-full w-full object-cover" /> : <CircleUserRound size={21} />}</Link></div></div></header><div className="mx-auto max-w-7xl px-5 py-8 sm:px-8"><div className="grid gap-5 lg:grid-cols-[220px_minmax(0,1fr)] lg:items-start"><aside className="rounded-xl border border-white bg-white p-4 shadow-sm lg:self-stretch"><div className="mb-5 flex flex-col items-center border-b border-slate-100 pb-5 text-center"><div className="flex h-24 w-24 items-center justify-center overflow-hidden rounded-full bg-cyan-100 text-cyan-700 ring-4 ring-cyan-50">{profilePhoto ? <img src={profilePhoto} alt="Professor profile" className="h-full w-full object-cover" /> : <CircleUserRound size={43} />}</div><p className="mt-3 text-sm font-bold text-slate-700">Dr. A. Karimov</p><p className="mt-1 text-xs text-slate-400">{dict.auth.professor}</p></div><p className="mb-3 text-xs font-bold uppercase tracking-[0.16em] text-slate-400">{dict.dashboard.quickAccess}</p><nav className="space-y-1"><Link href="/dashboard" className="flex items-center gap-2 rounded-lg bg-cyan-50 px-3 py-2.5 text-sm font-semibold text-cyan-700"><LayoutDashboard size={16} /> {dict.common.nav.dashboard}</Link><Link href="/subjects" className="flex items-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium text-slate-500 hover:bg-slate-50"><BookOpen size={16} /> {dict.dashboard.mySubjects}</Link><Link href="/homework" className="flex items-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium text-slate-500 hover:bg-slate-50"><ClipboardList size={16} /> {dict.common.nav.homework}</Link><Link href="/timetable" className="flex items-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium text-slate-500 hover:bg-slate-50"><CalendarDays size={16} /> {dict.dashboard.myTimetable}</Link><Link href="/profile" className="flex items-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium text-slate-500 hover:bg-slate-50"><CircleUserRound size={16} /> {dict.common.nav.profile}</Link></nav><div className="mt-8 border-t border-slate-100 pt-5"><p className="text-xs font-bold uppercase tracking-[0.14em] text-slate-400">{dict.dashboard.professorAccount}</p><p className="mt-3 text-sm font-semibold text-slate-700">{dict.dashboard.departmentOfMedicalSciences}</p><Link href="/login" className="mt-5 flex items-center gap-2 text-xs font-semibold text-slate-500 hover:text-red-600"><LogOut size={14} /> {dict.common.actions.signOut}</Link></div></aside><div className="flex flex-col gap-5"><div className="grid gap-6 md:grid-cols-2"><Metric icon={BookOpen} label={dict.dashboard.teachingFaculty} value={dict.dashboard.facultyOfMedicine} detail="Ala-Too International University" /><Metric icon={CalendarCheck} label={dict.dashboard.today} value={currentDateTime || dict.common.misc.loading} detail={dict.dashboard.localDateTime} /></div><div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_320px] lg:items-stretch"><CoursePanel /><HomeworkPanel /></div></div></div></div><Footer /></main>;
+  const [universityName, setUniversityName] = useState("");
+  const [courses, setCourses] = useState<Course[]>([]);
+  useEffect(() => {
+    void fetch("/api/auth/session").then(async (response) => {
+      if (!response.ok) return;
+      const result = (await response.json()) as {
+        university?: { name?: string };
+      };
+      setUniversityName(result.university?.name ?? "");
+    });
+    void fetch("/api/courses").then(async (response) => {
+      if (!response.ok) return;
+      const result = (await response.json()) as { courses?: Course[] };
+      setCourses(result.courses ?? []);
+    });
+  }, []);
+  const facultyNames = Array.from(new Set(courses.map((course) => course.facultyName).filter(Boolean))).join(", ");
+  return (
+    <main className="min-h-screen bg-[#f4f7fb] text-[#17233d]">
+      <header className="border-b border-slate-200 bg-white px-5 py-4 sm:px-8">
+        <div className="mx-auto flex max-w-7xl items-center justify-between gap-4">
+          <Link href="/" className="flex items-center gap-3">
+            <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#15345b] text-white">
+              <GraduationCap size={21} />
+            </span>
+            <span className="text-lg font-bold text-[#15345b]">
+              {dict.common.appName}
+            </span>
+          </Link>
+          <div className="flex items-center gap-5">
+            <nav className="hidden items-center gap-6 md:flex">
+              <MenuDropdown />
+            </nav>
+            <span className="hidden text-sm font-semibold text-cyan-700 sm:inline">
+              Dr. A. Karimov
+            </span>
+            <Link
+              href="/profile"
+              aria-label={dict.dashboard.openProfessorProfile}
+              className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full border-2 border-cyan-100 bg-cyan-50 text-cyan-700"
+            >
+              {profilePhoto ? (
+                <img
+                  src={profilePhoto}
+                  alt=""
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                <CircleUserRound size={21} />
+              )}
+            </Link>
+          </div>
+        </div>
+      </header>
+      <div className="mx-auto max-w-7xl px-5 py-8 sm:px-8">
+        <div className="grid gap-5 lg:grid-cols-[220px_minmax(0,1fr)] lg:items-stretch">
+          <aside className="rounded-xl border border-white bg-white p-4 shadow-sm lg:self-stretch">
+            <div className="mb-5 flex flex-col items-center border-b border-slate-100 pb-5 text-center">
+              <div className="flex h-24 w-24 items-center justify-center overflow-hidden rounded-full bg-cyan-100 text-cyan-700 ring-4 ring-cyan-50">
+                {profilePhoto ? (
+                  <img
+                    src={profilePhoto}
+                    alt="Professor profile"
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  <CircleUserRound size={43} />
+                )}
+              </div>
+              <p className="mt-3 text-sm font-bold text-slate-700">
+                {accountName || dict.common.misc.loading}
+              </p>
+              <p className="mt-1 text-xs text-slate-400">
+                {dict.auth.professor}
+              </p>
+            </div>
+            <p className="mb-3 text-xs font-bold uppercase tracking-[0.16em] text-slate-400">
+              {dict.dashboard.quickAccess}
+            </p>
+            <nav className="space-y-1">
+              <Link
+                href="/dashboard"
+                className="flex items-center gap-2 rounded-lg bg-cyan-50 px-3 py-2.5 text-sm font-semibold text-cyan-700"
+              >
+                <LayoutDashboard size={16} /> {dict.common.nav.dashboard}
+              </Link>
+              <Link
+                href="/subjects"
+                className="flex items-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium text-slate-500 hover:bg-slate-50"
+              >
+                <BookOpen size={16} /> {dict.dashboard.mySubjects}
+              </Link>
+              <Link
+                href="/homework"
+                className="flex items-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium text-slate-500 hover:bg-slate-50"
+              >
+                <ClipboardList size={16} /> {dict.common.nav.homework}
+              </Link>
+              <Link
+                href="/timetable"
+                className="flex items-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium text-slate-500 hover:bg-slate-50"
+              >
+                <CalendarDays size={16} /> {dict.dashboard.myTimetable}
+              </Link>
+              <Link
+                href="/profile"
+                className="flex items-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium text-slate-500 hover:bg-slate-50"
+              >
+                <CircleUserRound size={16} /> {dict.common.nav.profile}
+              </Link>
+            </nav>
+            <div className="mt-8 border-t border-slate-100 pt-5">
+              <p className="text-xs font-bold uppercase tracking-[0.14em] text-slate-400">
+                {dict.dashboard.professorAccount}
+              </p>
+              <p className="mt-3 text-sm font-semibold text-slate-700">
+                {universityName || dict.common.misc.loading}
+              </p>
+              <Link
+                href="/login"
+                className="mt-5 flex items-center gap-2 text-xs font-semibold text-slate-500 hover:text-red-600"
+              >
+                <LogOut size={14} /> {dict.common.actions.signOut}
+              </Link>
+            </div>
+          </aside>
+          <div className="flex flex-col gap-5">
+            <div className="grid gap-6 md:grid-cols-2">
+              <Metric
+                icon={BookOpen}
+                label={dict.dashboard.teachingFaculty}
+                value={facultyNames || universityName || dict.common.misc.loading}
+                detail={universityName || dict.common.misc.loading}
+              />
+              <Metric
+                icon={CalendarCheck}
+                label={dict.dashboard.today}
+                value={currentDateTime || dict.common.misc.loading}
+                detail={dict.dashboard.localDateTime}
+              />
+            </div>
+            <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_320px] lg:items-stretch">
+              <CoursePanel courses={courses} />
+              <HomeworkPanel />
+            </div>
+          </div>
+        </div>
+      </div>
+      <Footer />
+    </main>
+  );
 }
 
-function CoursePanel() { const dict = useDictionary(); return <section className="flex min-h-[560px] flex-col rounded-xl border border-white bg-white p-5 shadow-sm"><div className="flex items-center justify-between"><div><p className="text-xs font-bold uppercase tracking-[0.16em] text-cyan-600">{dict.dashboard.teachingOverview}</p><h1 className="mt-2 text-2xl font-semibold text-slate-800">{dict.dashboard.myCourses}</h1><p className="mt-1 text-sm text-slate-500">{dict.dashboard.myCoursesSubtitle}</p></div><BookOpen size={22} className="text-cyan-600" /></div><div className="mt-5 space-y-3">{courses.map((course) => <Link key={course.code} href="/subjects" className="block rounded-lg border border-slate-100 p-4 hover:border-cyan-300 hover:bg-cyan-50/40"><div className="flex items-start justify-between gap-3"><div><span className="text-xs font-bold text-cyan-700">{course.code}</span><p className="mt-1 font-semibold text-slate-700">{course.title}</p><p className="mt-1 text-xs text-slate-400">{dict.dashboard.groupsLabel}: {course.groups}</p></div><span className="text-right text-xs font-semibold text-slate-500">{course.students}<span className="block font-normal text-slate-400">{dict.dashboard.studentsSuffix}</span></span></div></Link>)}</div></section>; }
-function HomeworkPanel() { const dict = useDictionary(); return <section className="flex h-full flex-col rounded-xl border border-white bg-white p-5 shadow-sm"><div className="flex h-full flex-col"><div className="flex items-center justify-between"><div><p className="text-xs font-bold uppercase tracking-[0.16em] text-cyan-600">{dict.dashboard.professorWorkspace}</p><h2 className="mt-2 font-semibold text-slate-800">{dict.dashboard.homeworkGiven}</h2><p className="mt-1 text-sm text-slate-500">{dict.dashboard.homeworkGivenSubtitle}</p></div><ClipboardList size={20} className="text-cyan-600" /></div><div className="mt-5 space-y-3">{homework.map((item) => <Link key={item.title} href="/homework" className="block rounded-lg border border-slate-100 p-4 hover:border-cyan-300 hover:bg-cyan-50/40"><div className="flex items-start justify-between gap-3"><div><span className="text-xs font-bold text-cyan-700">{item.course} · {item.group}</span><p className="mt-1 text-sm font-semibold text-slate-700">{item.title}</p></div><span className="shrink-0 text-xs font-bold text-amber-600">{dict.dashboard.dueLabel} {item.due}</span></div><div className="mt-3 flex items-center justify-between text-xs text-slate-500"><span>{dict.dashboard.submittedOf.replace("{submitted}", String(item.submitted)).replace("{total}", String(item.total))}</span><span>{Math.round(item.submitted / item.total * 100)}%</span></div><div className="mt-2 h-1.5 overflow-hidden rounded-full bg-slate-100"><div className="h-full rounded-full bg-cyan-500" style={{ width: `${item.submitted / item.total * 100}%` }} /></div></Link>)}</div><button type="button" className="mt-auto flex items-center gap-2 pt-4 text-xs font-bold text-cyan-700"><Plus size={15} /> {dict.dashboard.createNewAssignment}</button></div></section>; }
-function Metric({ icon: Icon, label, value, detail }: { icon: typeof BookOpen; label: string; value: string; detail: string }) { return <div className="rounded-xl border border-white bg-white p-5 shadow-sm"><div className="flex items-center justify-between"><span className="text-sm text-slate-500">{label}</span><Icon size={18} className="text-cyan-600" /></div><p className="mt-4 text-lg font-bold text-slate-800 sm:text-2xl">{value}</p><p className="mt-1 text-sm text-slate-500">{detail}</p></div>; }
+function CoursePanel({ courses }: { courses: Course[] }) {
+  const dict = useDictionary();
+  return (
+    <section className="flex min-h-[560px] flex-col rounded-xl border border-white bg-white p-5 shadow-sm">
+      <div className="flex items-center justify-between">
+        <div>
+          <p className="text-xs font-bold uppercase tracking-[0.16em] text-cyan-600">
+            {dict.dashboard.teachingOverview}
+          </p>
+          <h1 className="mt-2 text-2xl font-semibold text-slate-800">
+            {dict.dashboard.myCourses}
+          </h1>
+          <p className="mt-1 text-sm text-slate-500">
+            {dict.dashboard.myCoursesSubtitle}
+          </p>
+        </div>
+        <BookOpen size={22} className="text-cyan-600" />
+      </div>
+      <div className="mt-5 space-y-3">
+        {courses.map((course) => (
+          <Link
+            key={course.code}
+            href="/subjects"
+            className="block rounded-lg border border-slate-100 p-4 hover:border-cyan-300 hover:bg-cyan-50/40"
+          >
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <span className="text-xs font-bold text-cyan-700">
+                  {course.code}
+                </span>
+                <p className="mt-1 font-semibold text-slate-700">
+                  {course.title}
+                </p>
+                  <p className="mt-1 text-xs text-slate-400">
+                    {dict.dashboard.groupsLabel}: {course.group_names || "No groups assigned"}
+                </p>
+              </div>
+              <span className="text-right text-xs font-semibold text-slate-500">
+                  {course.student_count}
+                <span className="block font-normal text-slate-400">
+                  {dict.dashboard.studentsSuffix}
+                </span>
+              </span>
+            </div>
+          </Link>
+        ))}
+      </div>
+    </section>
+  );
+}
+function HomeworkPanel() {
+  const dict = useDictionary();
+  const [homework, setHomework] = useState<Homework[]>([]);
+  useEffect(() => {
+    void fetch("/api/homework").then(async (response) => {
+      if (!response.ok) return;
+      const result = (await response.json()) as { homework?: Homework[] };
+      setHomework(
+        (result.homework ?? [])
+          .sort(
+            (first, second) =>
+              new Date(first.due_at).getTime() -
+              new Date(second.due_at).getTime(),
+          )
+          .slice(0, 5),
+      );
+    });
+  }, []);
+  return (
+    <section className="flex h-full flex-col rounded-xl border border-white bg-white p-5 shadow-sm">
+      <div className="flex h-full flex-col">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-[0.16em] text-cyan-600">
+              {dict.dashboard.professorWorkspace}
+            </p>
+            <h2 className="mt-2 font-semibold text-slate-800">
+              {dict.dashboard.homeworkGiven}
+            </h2>
+            <p className="mt-1 text-sm text-slate-500">
+              {dict.dashboard.homeworkGivenSubtitle}
+            </p>
+          </div>
+          <ClipboardList size={20} className="text-cyan-600" />
+        </div>
+        <div className="mt-5 space-y-2">
+          {homework.length === 0 ? (
+            <p className="rounded-lg border border-dashed border-slate-200 p-6 text-center text-xs text-slate-400">
+              No homework assigned yet.
+            </p>
+          ) : (
+            homework.map((item) => (
+              <Link
+                key={item.id}
+                href="/homework"
+                className="block rounded-lg border border-slate-100 p-3 hover:border-cyan-300 hover:bg-cyan-50/40"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <span className="text-xs font-bold text-cyan-700">
+                      {item.course_code} · {item.group_name}
+                    </span>
+                    <p className="mt-1 text-sm font-semibold text-slate-700">
+                      {item.title}
+                    </p>
+                  </div>
+                  <span className="shrink-0 text-xs font-bold text-amber-600">
+                    {dict.dashboard.dueLabel}{" "}
+                    {new Date(item.due_at).toLocaleDateString("en-US", {
+                      month: "short",
+                      day: "numeric",
+                    })}
+                  </span>
+                </div>
+                <div className="mt-2 text-xs text-slate-500">
+                  {item.submitted_count} submitted
+                </div>
+              </Link>
+            ))
+          )}
+        </div>
+        <button
+          type="button"
+          className="mt-auto flex items-center gap-2 pt-4 text-xs font-bold text-cyan-700"
+        >
+          <Plus size={15} /> {dict.dashboard.createNewAssignment}
+        </button>
+      </div>
+    </section>
+  );
+}
+function Metric({
+  icon: Icon,
+  label,
+  value,
+  detail,
+}: {
+  icon: typeof BookOpen;
+  label: string;
+  value: string;
+  detail: string;
+}) {
+  return (
+    <div className="rounded-xl border border-white bg-white p-5 shadow-sm">
+      <div className="flex items-center justify-between">
+        <span className="text-sm text-slate-500">{label}</span>
+        <Icon size={18} className="text-cyan-600" />
+      </div>
+      <p className="mt-4 text-lg font-bold text-slate-800 sm:text-2xl">
+        {value}
+      </p>
+      <p className="mt-1 text-sm text-slate-500">{detail}</p>
+    </div>
+  );
+}
