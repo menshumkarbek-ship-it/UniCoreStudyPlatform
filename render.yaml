@@ -1,15 +1,10 @@
-# Render Blueprint: a Node web service and a PostgreSQL database.
-# In Render: New + > Blueprint > pick this repository. Migrations run before each deploy.
+# Render Blueprint: one Node web service. The PostgreSQL database lives elsewhere (e.g. Neon or Supabase free tier):
+# paste its connection string as DATABASE_URL in the Render dashboard when the blueprint asks for it.
+# Migrations run before each deploy.
 #
 # Uploaded files (homework, exams, class materials, photos) go to UPLOAD_DIR. Render's free web service has no
 # persistent disk, so uploads are lost on every redeploy; to keep them, use a paid plan and attach a disk
 # mounted at /var/data (then UPLOAD_DIR below already points to it).
-databases:
-  - name: unicore-db
-    plan: free
-    databaseName: unicore
-    user: unicore
-
 services:
   - type: web
     name: unicore
@@ -23,9 +18,7 @@ services:
       - key: NODE_VERSION
         value: 22
       - key: DATABASE_URL
-        fromDatabase:
-          name: unicore-db
-          property: connectionString
+        sync: false
       - key: AUTH_SECRET
         generateValue: true
       - key: UPLOAD_DIR
