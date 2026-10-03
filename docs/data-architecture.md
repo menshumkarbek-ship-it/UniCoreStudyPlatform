@@ -1,35 +1,33 @@
 # UniCore data architecture
 
-## Database decision
+## Database
 
-SQLite is the local skeleton database. It is simple, file-based, and useful while the product and CRUD workflows are changing quickly.
+PostgreSQL, accessed through `src/lib/db.ts` (a `pg` connection pool with `db.one`, `db.many`, `db.run`, and `transaction`). Schema changes are SQL files in `db/migrations`, applied in order by `npm run db:migrate`, which records each file in `schema_migrations`. Never edit an applied migration; add a new file.
 
-PostgreSQL is the production database for the republic-wide platform. It is the right target for concurrent university users, backups, replication, migrations, reporting, and reliable transactions. The application must switch through a database adapter or repository layer rather than letting pages issue SQL directly.
+There is no seed data. The first platform administrator is created with `npm run admin:create`.
 
-## Ownership hierarchy
+## Ownership and tenancy
 
-- `universities` is the top-level tenant.
-- `faculties` belongs to one university.
-- `groups` belongs to one university and represents a cohort or class.
-- `users` belongs to one university and has a role: student, professor, or admin.
-- `courses` belongs to one university.
-- `enrollments` connects students to groups.
-- `teaching_assignments` connects professors, courses, and groups.
-- `timetable_entries` connects a university, course, group, and professor.
+- `universities` is the tenant. Everything below belongs to exactly one university.
+- `users` has a role: `admin` (platform administrator, `university_id` is NULL), `professor`, or `student` (both must have a `university_id`).
+- `faculties` belong to a university; `groups` belong to a faculty.
+- `enrollments` puts each student in exactly one group.
+- `courses` (shown as "Subjects") belong to a university, optionally a faculty, and **exactly one professor**.
+- `course_groups` says which groups take a course. This (course, group) pair is called an *offering*.
+- `timetable_entries`, `homework`, `exams`, `attendance_sessions`, and `announcements` all reference an offering.
 
-The numeric `id` columns are primary keys. The `*_id` columns are foreign keys, which are the secondary relationships between records. Do not store university names, faculty names, or student names as the relationship key because names can change and are not guaranteed to be unique.
+Cross-university links are impossible at the database level: university-owned tables carry `university_id`, and relationships use composite foreign keys such as `(group_id, university_id) → groups(id, university_id)`.
 
-## Rules for future work
+A professor's timetable is every timetable entry of the courses they own. A student's timetable is every entry for their group. Reassigning a course to another professor moves its timetable, homework, and gradebook with it.
 
-1. Every university-scoped query must include its university ownership condition.
-2. Every relationship creation must verify that all referenced records belong to the same university.
-3. Use database migrations for schema changes; do not edit the production database manually.
-4. Keep passwords as one-way hashes and never return password hashes from an API.
-5. Use transactions for imports and multi-record operations.
-6. Add indexes for foreign keys and frequent filters.
-7. Use PostgreSQL `bigint` or UUID identifiers when creating the production schema. Keep external university, student, and course codes in separate unique columns.
-8. Keep a global administrator separate from university-scoped staff. A global admin may have a nullable `university_id`; university administrators should remain scoped to their university.
+## Rules the application enforces
 
-## Current skeleton status
-
-The SQLite schema includes universities, faculties, users, courses, groups, enrollments, teaching assignments, homework, submissions, timetable entries, and notifications. The admin CRUD panel manages universities, faculties, users, subjects, groups, enrollments, teaching assignments, and timetable entries. Use `npm run db:migrate` for repeatable local schema updates. Bulk import and reporting should be added before national rollout.
+1. A professor can act only on offerings of courses they own (`requireOwnedOffering` in `src/lib/teaching.ts`).
+2. A student can see and submit only work for their own group.
+3. Timetable entries may not overlap for the same group, the same professor, or the same room.
+4. Weekdays are ISO numbers everywhere: 1 = Monday … 7 = Sunday (`src/lib/time.ts`).
+5. "Now" for attendance and exam dates is computed in the university's `timezone`, not the server's.
+6. Deletes are restrictive: you cannot delete a university, faculty, group, or professor that other records still depend on, and you cannot unlink a group from a course once it has homework, exams, or attendance.
+7. Passwords are bcrypt hashes. Sessions are signed cookies whose `token_version` must match the user row, so changing a password (or an admin resetting it) signs out every other device.
+8. Uploaded files are checked by content (PDF/JPEG/PNG/WebP signatures), stored under random names in `UPLOAD_DIR`, and served only through authorised routes.
+9. Failed logins and wrong attendance codes are throttled through `rate_limit_events`.

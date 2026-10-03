@@ -1,36 +1,46 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { getSession } from "@/lib/auth";
-import { getDatabase } from "@/lib/db";
+import { db, transaction } from "@/lib/db";
+import { idSchema, readJson, requireUser, route } from "@/lib/http";
 import { notifyGroup } from "@/lib/notifications";
+import { professorOfferings, requireOwnedOffering } from "@/lib/teaching";
 
 export const runtime = "nodejs";
 
-const announcementSchema = z.object({ groupId: z.coerce.number().int().positive(), title: z.string().trim().min(2).max(160), detail: z.string().trim().min(2).max(5000) });
+const announcementSchema = z.object({
+  courseId: idSchema,
+  groupId: idSchema,
+  title: z.string().trim().min(2).max(160),
+  body: z.string().trim().min(2).max(5000),
+});
 
-export async function GET() {
-  const session = await getSession();
-  if (!session) return NextResponse.json({ error: "Authentication required." }, { status: 401 });
-  const database = getDatabase();
-  const announcements = session.role === "professor"
-    ? database.prepare("SELECT a.id, a.title, a.detail, a.created_at AS createdAt, g.name AS groupName FROM announcements a JOIN groups g ON g.id = a.group_id WHERE a.created_by = ? ORDER BY a.created_at DESC").all(session.userId)
-    : database.prepare("SELECT a.id, a.title, a.detail, a.created_at AS createdAt, g.name AS groupName, u.full_name AS professorName FROM announcements a JOIN groups g ON g.id = a.group_id JOIN users u ON u.id = a.created_by JOIN enrollments e ON e.group_id = a.group_id WHERE e.user_id = ? ORDER BY a.created_at DESC").all(session.userId);
-  const groups = session.role === "professor"
-    ? database.prepare("SELECT DISTINCT g.id, g.name, c.code, c.title AS courseTitle FROM course_professors cp JOIN courses c ON c.id = cp.course_id JOIN groups g ON g.university_id = c.university_id AND (c.faculty_id IS NULL OR g.faculty_id = c.faculty_id) WHERE cp.professor_id = ? ORDER BY c.code, g.name").all(session.userId)
-    : [];
-  return NextResponse.json({ announcements, groups });
-}
+const announcementColumns = `a.id, a.title, a.body, a.created_at AS "createdAt", c.code AS "courseCode", c.title AS "courseTitle", g.name AS "groupName", p.full_name AS "professorName"`;
+const announcementJoins = "FROM announcements a JOIN courses c ON c.id = a.course_id JOIN groups g ON g.id = a.group_id JOIN users p ON p.id = a.created_by";
 
-export async function POST(request: Request) {
-  const session = await getSession();
-  if (!session || session.role !== "professor") return NextResponse.json({ error: "Professor access required." }, { status: 403 });
-  const parsed = announcementSchema.safeParse(await request.json().catch(() => null));
-  if (!parsed.success) return NextResponse.json({ error: "Enter a title, message, and group." }, { status: 400 });
-  const { groupId, title, detail } = parsed.data;
-  const database = getDatabase();
-  const teaching = database.prepare("SELECT 1 FROM course_professors cp JOIN courses c ON c.id = cp.course_id JOIN groups g ON g.id = ? WHERE cp.professor_id = ? AND g.university_id = c.university_id AND (c.faculty_id IS NULL OR g.faculty_id = c.faculty_id)").get(groupId, session.userId);
-  if (!teaching) return NextResponse.json({ error: "You do not teach this group." }, { status: 403 });
-  const result = database.prepare("INSERT INTO announcements (group_id, created_by, title, detail) VALUES (?, ?, ?, ?)").run(groupId, session.userId, title, detail);
-  notifyGroup(database, groupId, `Bulletin: ${title}`, detail, "/bulletin");
-  return NextResponse.json({ id: result.lastInsertRowid }, { status: 201 });
-}
+export const GET = route(async () => {
+  const user = await requireUser("professor", "student");
+  if (user.role === "professor") {
+    const [announcements, offerings] = await Promise.all([
+      db.many(`SELECT ${announcementColumns} ${announcementJoins} WHERE c.professor_id = $1 ORDER BY a.created_at DESC LIMIT 100`, [user.id]),
+      professorOfferings(user.id),
+    ]);
+    return NextResponse.json({ announcements, offerings });
+  }
+  const announcements = await db.many(
+    `SELECT ${announcementColumns} ${announcementJoins} WHERE a.group_id = (SELECT group_id FROM enrollments WHERE student_id = $1) ORDER BY a.created_at DESC LIMIT 100`,
+    [user.id],
+  );
+  return NextResponse.json({ announcements });
+});
+
+export const POST = route(async (request) => {
+  const user = await requireUser("professor");
+  const data = await readJson(request, announcementSchema);
+  const id = await transaction(async (tx) => {
+    const offering = await requireOwnedOffering(user.id, data.courseId, data.groupId, tx);
+    const created = await tx.one<{ id: number }>("INSERT INTO announcements (course_id, group_id, created_by, title, body) VALUES ($1, $2, $3, $4, $5) RETURNING id", [data.courseId, data.groupId, user.id, data.title, data.body]);
+    await notifyGroup(tx, data.groupId, `${offering.courseCode}: ${data.title}`, data.body, "/bulletin", user.id);
+    return created!.id;
+  });
+  return NextResponse.json({ id }, { status: 201 });
+});

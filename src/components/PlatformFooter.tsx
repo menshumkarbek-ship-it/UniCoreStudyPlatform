@@ -1,8 +1,12 @@
+"use client";
+
+import { useDictionary } from "@/i18n/locale-provider";
+
 export default function PlatformFooter() {
+  const dict = useDictionary();
   return (
-    <footer className="m-0 border-t border-slate-100 bg-white px-6 py-4 text-center text-xs leading-5 text-slate-500">
-      <p>Copyright © 2026 UniCore. All Rights Reserved.</p>
-      <p>Best viewed with Microsoft Edge, Chrome 55+, Firefox 50.0+ on Windows 7+, or Safari 9.0+ on macOS.</p>
+    <footer className="border-t border-line px-6 py-5">
+      <p className="mx-auto max-w-[1200px] text-[10px] text-faint">© {new Date().getFullYear()} UniCore · {dict.adm.footer}</p>
     </footer>
   );
 }

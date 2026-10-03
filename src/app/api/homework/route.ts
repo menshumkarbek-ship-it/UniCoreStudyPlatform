@@ -1,39 +1,74 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { getSession } from "@/lib/auth";
-import { getDatabase } from "@/lib/db";
+import { db, transaction } from "@/lib/db";
+import { HttpError, idSchema, readJson, requireUser, route } from "@/lib/http";
+import { gradingScheme, resolveComponent } from "@/lib/grading";
 import { notifyGroup } from "@/lib/notifications";
+import { professorOfferings, requireOwnedOffering } from "@/lib/teaching";
 
 export const runtime = "nodejs";
 
-const homeworkSchema = z.object({ courseId: z.coerce.number().int().positive(), groupId: z.coerce.number().int().positive(), title: z.string().trim().min(2).max(160), instructions: z.string().trim().min(2).max(5000), dueAt: z.string().datetime(), points: z.coerce.number().int().positive().max(1000) });
+const homeworkSchema = z.object({
+  courseId: idSchema,
+  groupId: idSchema,
+  title: z.string().trim().min(2).max(160),
+  instructions: z.string().trim().min(2).max(5000),
+  dueAt: z.string().datetime({ offset: true }),
+  points: z.coerce.number().int().positive().max(1000),
+  componentId: idSchema.optional(),
+});
 
-export async function GET() {
-  const session = await getSession();
-  if (!session) return NextResponse.json({ error: "Authentication required." }, { status: 401 });
-  const database = getDatabase();
-  const homework = session.role === "professor"
-    ? database.prepare("SELECT h.id, h.title, h.instructions, h.due_at, h.points, c.code AS course_code, c.title AS course_title, g.name AS group_name, COUNT(s.id) AS submitted_count FROM homework h JOIN courses c ON c.id = h.course_id JOIN groups g ON g.id = h.group_id LEFT JOIN homework_submissions s ON s.homework_id = h.id AND s.status IN ('submitted', 'graded') WHERE h.created_by = ? GROUP BY h.id ORDER BY h.due_at").all(session.userId)
-    : database.prepare("SELECT h.id, h.title, h.instructions, h.due_at, h.points, c.code AS course_code, c.title AS course_title, g.name AS group_name, COALESCE(s.status, 'open') AS status, s.file_name, s.file_type, s.file_size, s.submitted_at, s.grade FROM homework h JOIN courses c ON c.id = h.course_id JOIN groups g ON g.id = h.group_id JOIN enrollments e ON e.group_id = h.group_id LEFT JOIN homework_submissions s ON s.homework_id = h.id AND s.student_id = ? WHERE e.user_id = ? ORDER BY h.due_at").all(session.userId, session.userId);
-  const groups = session.role === "professor"
-    ? database.prepare("SELECT g.id, g.name, c.id AS course_id, c.code AS course_code, c.title AS course_title, COUNT(DISTINCT e.user_id) AS student_count FROM course_professors cp JOIN courses c ON c.id = cp.course_id JOIN groups g ON g.university_id = c.university_id AND (c.faculty_id IS NULL OR g.faculty_id = c.faculty_id) JOIN enrollments e ON e.group_id = g.id JOIN users student ON student.id = e.user_id AND student.role = 'student' WHERE cp.professor_id = ? GROUP BY g.id, g.name, c.id, c.code, c.title ORDER BY c.code, g.name").all(session.userId)
-    : [];
-  return NextResponse.json({ homework, groups });
-}
+export const GET = route(async () => {
+  const user = await requireUser("professor", "student");
+  if (user.role === "professor") {
+    const [homework, offerings] = await Promise.all([
+      db.many(
+        `SELECT h.id, h.title, h.instructions, h.due_at AS "dueAt", h.points, h.created_at AS "createdAt",
+                c.id AS "courseId", c.code AS "courseCode", c.title AS "courseTitle", g.id AS "groupId", g.name AS "groupName",
+                h.component_id AS "componentId", gc.name AS "componentName",
+                (SELECT COUNT(*) FROM enrollments e WHERE e.group_id = h.group_id) AS "studentCount",
+                (SELECT COUNT(*) FROM homework_submissions s WHERE s.homework_id = h.id) AS "submittedCount",
+                (SELECT COUNT(*) FROM homework_submissions s WHERE s.homework_id = h.id AND s.status = 'graded') AS "gradedCount"
+           FROM homework h JOIN courses c ON c.id = h.course_id JOIN groups g ON g.id = h.group_id JOIN grading_components gc ON gc.id = h.component_id
+          WHERE c.professor_id = $1
+          ORDER BY h.due_at DESC`,
+        [user.id],
+      ),
+      professorOfferings(user.id),
+    ]);
+    return NextResponse.json({ homework, offerings, components: await gradingScheme(user.universityId!) });
+  }
+  const homework = await db.many(
+    `SELECT h.id, h.title, h.instructions, h.due_at AS "dueAt", h.points,
+            c.code AS "courseCode", c.title AS "courseTitle", g.name AS "groupName", p.full_name AS "professorName", gc.name AS "componentName",
+            s.status, s.file_name AS "fileName", s.submitted_at AS "submittedAt", s.grade, s.feedback
+       FROM enrollments e
+       JOIN homework h ON h.group_id = e.group_id
+       JOIN courses c ON c.id = h.course_id
+       JOIN groups g ON g.id = h.group_id
+       JOIN users p ON p.id = c.professor_id
+       JOIN grading_components gc ON gc.id = h.component_id
+       LEFT JOIN homework_submissions s ON s.homework_id = h.id AND s.student_id = e.student_id
+      WHERE e.student_id = $1
+      ORDER BY h.due_at`,
+    [user.id],
+  );
+  return NextResponse.json({ homework });
+});
 
-export async function POST(request: Request) {
-  const session = await getSession();
-  if (!session || session.role !== "professor") return NextResponse.json({ error: "Professor access required." }, { status: 403 });
-  const parsed = homeworkSchema.safeParse(await request.json().catch(() => null));
-  if (!parsed.success) return NextResponse.json({ error: "Invalid homework details." }, { status: 400 });
-  const { courseId, groupId, title, instructions, dueAt, points } = parsed.data;
-  const database = getDatabase();
-  const assignment = database.prepare("SELECT 1 FROM course_professors cp JOIN courses c ON c.id = cp.course_id JOIN groups g ON g.id = ? WHERE cp.professor_id = ? AND cp.course_id = ? AND g.university_id = c.university_id AND (c.faculty_id IS NULL OR g.faculty_id = c.faculty_id)").get(groupId, session.userId, courseId);
-  if (!assignment) return NextResponse.json({ error: "You do not teach this course group." }, { status: 403 });
-  const result = database.prepare("INSERT INTO homework (course_id, group_id, created_by, title, instructions, due_at, points) VALUES (?, ?, ?, ?, ?, ?, ?)").run(courseId, groupId, session.userId, title, instructions, dueAt, points);
-  const course = database.prepare("SELECT c.code, g.name AS groupName FROM courses c JOIN groups g ON g.id = ? WHERE c.id = ?").get(courseId, groupId) as { code: string; groupName: string };
-  try {
-    notifyGroup(database, groupId, `New homework: ${title}`, `${course.code} · ${course.groupName} · Due ${new Date(dueAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })}`, "/homework");
-  } catch {}
-  return NextResponse.json({ id: Number(result.lastInsertRowid) }, { status: 201 });
-}
+export const POST = route(async (request) => {
+  const user = await requireUser("professor");
+  const data = await readJson(request, homeworkSchema);
+  if (new Date(data.dueAt).getTime() <= Date.now()) throw new HttpError(400, "The deadline must be in the future.");
+  const id = await transaction(async (tx) => {
+    const offering = await requireOwnedOffering(user.id, data.courseId, data.groupId, tx);
+    const componentId = await resolveComponent(tx, user.universityId!, data.componentId, "homework");
+    const created = await tx.one<{ id: number }>(
+      "INSERT INTO homework (course_id, group_id, created_by, title, instructions, due_at, points, component_id) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id",
+      [data.courseId, data.groupId, user.id, data.title, data.instructions, data.dueAt, data.points, componentId],
+    );
+    await notifyGroup(tx, data.groupId, `New homework: ${data.title}`, `${offering.courseCode} · due ${new Date(data.dueAt).toLocaleDateString("en-GB", { day: "numeric", month: "short", timeZone: user.timezone })}`, "/homework", user.id);
+    return created!.id;
+  });
+  return NextResponse.json({ id }, { status: 201 });
+});

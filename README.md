@@ -1,44 +1,62 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# UniCore
 
-## Getting Started
+A study platform for universities. A platform administrator adds universities; each university then runs its own faculties, groups, professors, students, subjects, and timetable. Students and professors share one workspace (dashboard, subjects, timetable, homework, exams, grades, attendance, bulletin); the public landing page is at `/`.
 
-First, run the development server:
+Built with Next.js 16 (App Router), PostgreSQL, and Tailwind CSS 4.
+
+## Getting started
+
+Requirements: Node.js 24+ and either Docker or a PostgreSQL 14+ server.
 
 ```bash
+npm install
+cp .env.example .env.local        # then set AUTH_SECRET (see the file for a generator)
+npm run db:up                     # starts PostgreSQL in Docker on 127.0.0.1:5433
+npm run db:migrate                # creates the schema
+npm run admin:create -- --email you@example.kg --name "Your Name"   # prompts for a password
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open http://localhost:3000/admin/login, sign in as the admin, add a university, and set it up in this order: faculties → groups → professors → students → subjects → timetable. Students and professors then sign in at `/login`.
 
-## Backend setup
+To use an existing PostgreSQL server instead of Docker, point `DATABASE_URL` in `.env.local` at it and skip `npm run db:up`.
 
-This app uses Next.js route handlers with Node 24's built-in SQLite driver. The first request to `/api/universities` creates `data/tronsabak.sqlite` and seeds the university and demo accounts. Run `npm run db:seed` to add demo courses, groups, teaching assignments, enrollment, and homework, or `npm run db:check` to inspect the database tables.
+## Scripts
 
-Copy `.env.example` to `.env.local` and set a long random `AUTH_SECRET` before deployment. Authentication uses an HTTP-only signed session cookie. The database layer is isolated in `src/lib/db.ts`, so the SQLite provider can be replaced with PostgreSQL without changing the route contracts.
+| Command | What it does |
+| --- | --- |
+| `npm run dev` | Development server |
+| `npm run build` / `npm start` | Production build and server |
+| `npm run db:up` | Start the local PostgreSQL container |
+| `npm run db:migrate` | Apply pending migrations from `db/migrations` (safe to run on every deploy) |
+| `npm run admin:create -- --email … --name …` | Create a platform admin, or reset an existing admin's password |
+| `npm run lint` / `npm run typecheck` | ESLint / TypeScript |
+| `npm run i18n:check` | Check that en/ru/ky dictionaries have the same keys |
 
-Available backend endpoints include `GET /api/universities`, `POST /api/auth/login`, `GET /api/auth/session`, `POST /api/auth/logout`, `GET /api/courses`, `GET /api/homework`, and professor-only `POST /api/homework`.
+## Configuration
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+| Variable | Required | Notes |
+| --- | --- | --- |
+| `DATABASE_URL` | yes | PostgreSQL connection string |
+| `AUTH_SECRET` | yes in production | At least 32 random characters; signs session cookies |
+| `UPLOAD_DIR` | no | Where uploaded files go (default `./data/uploads`). Use persistent storage in production. |
+| `DATABASE_POOL_SIZE` | no | Connection pool size (default 10) |
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+There is no seed or demo data: every record is created through the admin panel.
 
-## Learn More
+## How the data fits together
 
-To learn more about Next.js, take a look at the following resources:
+See [docs/data-architecture.md](docs/data-architecture.md). In short: a **subject** belongs to one **professor** and is taken by one or more **groups**; each **student** is in one group. The timetable, homework, exams, attendance, and announcements all hang off a (subject, group) pair, so a professor's timetable and a student's timetable are both derived from that data.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Project layout
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```
+db/migrations/          SQL migrations, applied in filename order
+scripts/                migrate.mjs, create-admin.mjs, check-i18n-keys.mjs
+src/app/(workspace)/    student and professor pages (shared layout with sidebar)
+src/app/admin/          platform admin panel and admin sign-in
+src/app/api/            route handlers
+src/lib/                db, auth, http helpers, file storage, rate limiting, time helpers
+src/components/         shared UI
+src/i18n/               en / ru / ky dictionaries
+```

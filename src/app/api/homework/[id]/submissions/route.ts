@@ -1,68 +1,96 @@
 import { NextResponse } from "next/server";
-import { mkdir, unlink, writeFile } from "node:fs/promises";
-import path from "node:path";
-import { getSession } from "@/lib/auth";
-import { getDatabase } from "@/lib/db";
+import { z } from "zod";
+import { db, transaction } from "@/lib/db";
+import { assertBodyWithin, deleteUpload, documentKinds, saveUpload, validateUpload } from "@/lib/files";
+import { HttpError, idSchema, parseId, readForm, readJson, requireUser, route } from "@/lib/http";
+import { notifyUser } from "@/lib/notifications";
+import { loadHomework } from "@/lib/teaching";
 
 export const runtime = "nodejs";
 
-const allowedTypes = new Set(["image/jpeg", "application/pdf"]);
+type Context = RouteContext<"/api/homework/[id]/submissions">;
 const maxFileSize = 10 * 1024 * 1024;
 
-type Params = { params: Promise<{ id: string }> };
+// Professor view: every student in the group, with their submission if they made one.
+// Students who submitted and later moved to another group are still listed.
+export const GET = route(async (_request, { params }: Context) => {
+  const user = await requireUser("professor");
+  const homework = await loadHomework(parseId((await params).id), user);
+  const submissions = await db.many(
+    `WITH roster AS (
+       SELECT student_id FROM enrollments WHERE group_id = $2
+       UNION SELECT student_id FROM homework_submissions WHERE homework_id = $1
+     )
+     SELECT u.id AS "studentId", u.full_name AS "studentName", u.student_number AS "studentNumber",
+            s.status, s.file_name AS "fileName", s.file_size AS "fileSize", s.submitted_at AS "submittedAt", s.grade, s.feedback
+       FROM roster r JOIN users u ON u.id = r.student_id
+       LEFT JOIN homework_submissions s ON s.homework_id = $1 AND s.student_id = r.student_id
+      ORDER BY u.full_name`,
+    [homework.id, homework.groupId],
+  );
+  return NextResponse.json({ submissions, points: homework.points });
+});
 
-async function getHomework(id: number) {
-  const database = getDatabase();
-  return database.prepare("SELECT id, group_id, created_by, due_at FROM homework WHERE id = ?").get(id) as { id: number; group_id: number; created_by: number; due_at: string } | undefined;
-}
+// Student upload. The new file is written first and the old one removed only after the database
+// points at the new file, so a failed upload never loses the previous submission.
+export const POST = route(async (request, { params }: Context) => {
+  const user = await requireUser("student");
+  assertBodyWithin(request, maxFileSize);
+  const homework = await loadHomework(parseId((await params).id), user);
+  if (new Date(homework.dueAt).getTime() <= Date.now()) throw new HttpError(409, "The deadline has passed. Submissions are closed.");
+  const upload = await validateUpload((await readForm(request)).get("file"), documentKinds, maxFileSize, "PDF, JPG, or PNG");
+  const filePath = await saveUpload(`homework/${homework.id}`, upload);
+  try {
+    const previousPath = await transaction(async (tx) => {
+      const existing = await tx.one<{ filePath: string; status: string }>(`SELECT file_path AS "filePath", status FROM homework_submissions WHERE homework_id = $1 AND student_id = $2 FOR UPDATE`, [homework.id, user.id]);
+      if (existing?.status === "graded") throw new HttpError(409, "This homework has already been graded and can no longer be changed.");
+      await tx.run(
+        `INSERT INTO homework_submissions (homework_id, student_id, status, file_name, file_path, file_type, file_size)
+         VALUES ($1, $2, 'submitted', $3, $4, $5, $6)
+         ON CONFLICT (homework_id, student_id) DO UPDATE
+           SET submitted_at = now(), file_name = EXCLUDED.file_name, file_path = EXCLUDED.file_path, file_type = EXCLUDED.file_type, file_size = EXCLUDED.file_size`,
+        [homework.id, user.id, upload.name, filePath, upload.contentType, upload.size],
+      );
+      await notifyUser(tx, homework.professorId, `${existing ? "Resubmitted" : "Submitted"}: ${homework.title}`, `${user.fullName} · ${homework.courseCode}`, `/homework?open=${homework.id}`);
+      return existing?.filePath;
+    });
+    await deleteUpload(previousPath);
+  } catch (error) {
+    await deleteUpload(filePath);
+    throw error;
+  }
+  return NextResponse.json({ fileName: upload.name });
+});
 
-export async function GET(request: Request, { params }: Params) {
-  const session = await getSession();
-  if (!session || session.role !== "professor") return NextResponse.json({ error: "Professor access required." }, { status: 403 });
-  const homeworkId = Number((await params).id);
-  const homework = await getHomework(homeworkId);
-  if (!homework || homework.created_by !== session.userId) return NextResponse.json({ error: "Homework not found." }, { status: 404 });
-  const database = getDatabase();
-  const submissions = database.prepare("SELECT s.id, s.student_id AS studentId, u.full_name AS studentName, u.email, s.status, s.file_name AS fileName, s.file_type AS fileType, s.file_size AS fileSize, s.submitted_at AS submittedAt FROM homework_submissions s JOIN users u ON u.id = s.student_id JOIN enrollments e ON e.user_id = s.student_id AND e.group_id = ? WHERE s.homework_id = ? ORDER BY u.full_name").all(homework.group_id, homeworkId);
-  return NextResponse.json({ submissions });
-}
-
-export async function POST(request: Request, { params }: Params) {
-  const session = await getSession();
-  if (!session || session.role !== "student") return NextResponse.json({ error: "Student access required." }, { status: 403 });
-  const homeworkId = Number((await params).id);
-  const homework = await getHomework(homeworkId);
-  if (!homework) return NextResponse.json({ error: "Homework not found." }, { status: 404 });
-  if (new Date(homework.due_at).getTime() <= Date.now()) return NextResponse.json({ error: "This homework is closed." }, { status: 409 });
-  const database = getDatabase();
-  const enrollment = database.prepare("SELECT 1 FROM enrollments WHERE user_id = ? AND group_id = ?").get(session.userId, homework.group_id);
-  if (!enrollment) return NextResponse.json({ error: "You are not enrolled in this homework group." }, { status: 403 });
-  const formData = await request.formData();
-  const file = formData.get("file");
-  if (!(file instanceof File)) return NextResponse.json({ error: "Choose a JPG or PDF file." }, { status: 400 });
-  if (!allowedTypes.has(file.type)) return NextResponse.json({ error: "Only JPG and PDF files are accepted." }, { status: 415 });
-  if (file.size > maxFileSize) return NextResponse.json({ error: "Files must be 10 MB or smaller." }, { status: 413 });
-  const extension = file.type === "application/pdf" ? ".pdf" : ".jpg";
-  const relativePath = path.join("homework", `${homeworkId}-${session.userId}-${Date.now()}${extension}`);
-  const absolutePath = path.join(process.cwd(), "data", "uploads", relativePath);
-  await mkdir(path.dirname(absolutePath), { recursive: true });
-  const existing = database.prepare("SELECT file_path FROM homework_submissions WHERE homework_id = ? AND student_id = ?").get(homeworkId, session.userId) as { file_path: string | null } | undefined;
-  if (existing?.file_path) await unlink(path.join(process.cwd(), "data", "uploads", existing.file_path)).catch(() => undefined);
-  await writeFile(absolutePath, Buffer.from(await file.arrayBuffer()));
-  database.prepare("INSERT INTO homework_submissions (homework_id, student_id, status, submitted_at, file_name, file_path, file_type, file_size) VALUES (?, ?, 'submitted', CURRENT_TIMESTAMP, ?, ?, ?, ?) ON CONFLICT(homework_id, student_id) DO UPDATE SET status = 'submitted', submitted_at = CURRENT_TIMESTAMP, file_name = excluded.file_name, file_path = excluded.file_path, file_type = excluded.file_type, file_size = excluded.file_size").run(homeworkId, session.userId, file.name, relativePath, file.type, file.size);
-  return NextResponse.json({ ok: true, fileName: file.name });
-}
-
-export async function DELETE(request: Request, { params }: Params) {
-  const session = await getSession();
-  if (!session || session.role !== "student") return NextResponse.json({ error: "Student access required." }, { status: 403 });
-  const homeworkId = Number((await params).id);
-  const homework = await getHomework(homeworkId);
-  if (!homework) return NextResponse.json({ error: "Homework not found." }, { status: 404 });
-  if (new Date(homework.due_at).getTime() <= Date.now()) return NextResponse.json({ error: "This homework is closed." }, { status: 409 });
-  const database = getDatabase();
-  const existing = database.prepare("SELECT file_path FROM homework_submissions WHERE homework_id = ? AND student_id = ?").get(homeworkId, session.userId) as { file_path: string | null } | undefined;
-  if (existing?.file_path) await unlink(path.join(process.cwd(), "data", "uploads", existing.file_path)).catch(() => undefined);
-  database.prepare("DELETE FROM homework_submissions WHERE homework_id = ? AND student_id = ?").run(homeworkId, session.userId);
+export const DELETE = route(async (_request, { params }: Context) => {
+  const user = await requireUser("student");
+  const homework = await loadHomework(parseId((await params).id), user);
+  if (new Date(homework.dueAt).getTime() <= Date.now()) throw new HttpError(409, "The deadline has passed. Submissions are closed.");
+  const removed = await db.one<{ filePath: string }>(`DELETE FROM homework_submissions WHERE homework_id = $1 AND student_id = $2 AND status = 'submitted' RETURNING file_path AS "filePath"`, [homework.id, user.id]);
+  if (!removed) throw new HttpError(409, "There is no ungraded submission to remove.");
+  await deleteUpload(removed.filePath);
   return NextResponse.json({ ok: true });
-}
+});
+
+const gradeSchema = z.object({
+  studentId: idSchema,
+  grade: z.coerce.number().int().min(0),
+  feedback: z.string().trim().max(2000).optional().transform((value) => value || null),
+});
+
+// Professor grading. Re-grading is allowed; the student is notified each time.
+export const PATCH = route(async (request, { params }: Context) => {
+  const user = await requireUser("professor");
+  const homework = await loadHomework(parseId((await params).id), user);
+  const { studentId, grade, feedback } = await readJson(request, gradeSchema);
+  if (grade > homework.points) throw new HttpError(400, `The grade cannot be more than ${homework.points} points.`);
+  await transaction(async (tx) => {
+    const updated = await tx.run(
+      "UPDATE homework_submissions SET status = 'graded', grade = $3, feedback = $4, graded_at = now(), graded_by = $5 WHERE homework_id = $1 AND student_id = $2",
+      [homework.id, studentId, grade, feedback, user.id],
+    );
+    if (!updated) throw new HttpError(404, "This student has not submitted anything to grade.");
+    await notifyUser(tx, studentId, `Graded: ${homework.title}`, `${homework.courseCode} · ${grade}/${homework.points}${feedback ? ` · ${feedback}` : ""}`, "/grades");
+  });
+  return NextResponse.json({ ok: true });
+});

@@ -1,9 +1,11 @@
 import { NextResponse } from "next/server";
-import { getDatabase } from "@/lib/db";
+import { db } from "@/lib/db";
+import { route } from "@/lib/http";
 
 export const runtime = "nodejs";
 
-export async function GET() {
-  const universities = getDatabase().prepare("SELECT id, name, city FROM universities WHERE name != '__ADMIN_INTERNAL__' ORDER BY name").all();
+/** Public list for the sign-in page's university picker. */
+export const GET = route(async () => {
+  const universities = await db.many("SELECT id, name, city FROM universities ORDER BY name");
   return NextResponse.json({ universities });
-}
+});

@@ -1,0 +1,22 @@
+# Local PostgreSQL for development. Production should use a managed PostgreSQL
+# instance and point DATABASE_URL at it instead.
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: unicore
+      POSTGRES_USER: unicore
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-unicore_dev}
+    ports:
+      - "127.0.0.1:5433:5432"
+    volumes:
+      - unicore-db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U unicore -d unicore"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  unicore-db:

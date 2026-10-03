@@ -1,293 +1,116 @@
 @import "tailwindcss";
 
-.professor-content > main > header {
-  display: none;
-}
+/* Dark mode follows the `dark` class on <html> (set before paint by the root layout). */
+@custom-variant dark (&:where(.dark, .dark *));
 
-.professor-content > main {
-  min-height: auto;
-}
-
-.professor-content > main:has(> header + div > div > section) {
-  padding: 2rem 1.25rem;
-}
-
-.professor-content > main > footer {
-  display: none;
-}
-
-.student-content > main > header {
-  display: none;
-}
-
-.student-content > main {
-  min-height: auto;
-}
-
-.student-content > main > footer {
-  display: none;
-}
-
-.profile-settings > header > div > button:last-child {
-  display: none;
-}
-
-.student-content > main > div > div > aside {
-  display: none;
-}
-
-.student-content > main > div > div {
-  display: block;
-}
-
-.student-content > main > div {
-  max-width: none;
-  padding: 0;
-}
-
-.professor-shell {
-  min-height: 100vh;
-  background: #f4f7fb;
-}
-
-.student-shell {
-  min-height: 100vh;
-  background: #f4f7fb;
-}
-
-.professor-content > main > div > div > aside {
-  display: none;
-}
-
-.professor-content > main section.flex.h-full > div > button {
-  display: none;
-}
-
-.professor-content > main > div > div {
-  display: block;
-}
-
-.professor-content > main > div {
-  max-width: none;
-  padding: 0;
-}
-
-.professor-shell > div > div > aside {
-  position: static !important;
-  left: auto !important;
-  top: auto !important;
-  width: auto !important;
-}
-
-.student-shell > div > div > aside {
-  position: static !important;
-  left: auto !important;
-  top: auto !important;
-  width: auto !important;
-}
-
-.professor-shell > div > div > aside nav a:last-child,
-.professor-shell > div > div > aside > button,
-.student-shell > div > div > aside nav a:last-child,
-.student-shell > div > div > aside > button {
-  display: none;
-}
-
-@media (min-width: 1024px) {
-  .professor-shell > div > div > aside {
-    align-self: start;
-    min-height: 44.625rem;
-  }
-
-  .student-shell > div > div > aside {
-    align-self: start;
-    min-height: 44.625rem;
-  }
-}
-
-@media (min-width: 640px) {
-  .professor-content > main:has(> header + div > div > section) {
-    padding-right: 2rem;
-    padding-left: 2rem;
-  }
-}
-
+/* Calm classroom: cool-gray canvas, white cards, ink-scale type, hairline borders, flat surfaces.
+   Violet (aubergine) is the main accent and appears as outlines and small marks, never as a fill; ember is the secondary.
+   Dark mode swaps to the obsidian inverted-panel palette. */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  --canvas: #e9eaf2;
+  --surface: #ffffff;
+  --surface-muted: #f6f7f9;
+  --line: #d1d2e0;
+  --ink: #2a2b3f;
+  --ink-soft: #33364a;
+  --muted: #595c73;
+  --faint: #9194ac;
+  --brand: #202230;
+  --on-brand: #ffffff;
+  --accent: #6d28d2;
+  --accent-soft: #eeeefd;
+  --periwinkle: #6d28d2;
+  --midnight: #202230;
+  --nav-glow: oklch(0.6295 0.0204 306.5 / 0.08) 0px 2px 8px 0px, oklch(0.6295 0.0204 306.5 / 0.12) 0px 4px 16px 0px;
 }
 
 html.dark {
-  --background: #0f172a;
-  --foreground: #e2e8f0;
+  --canvas: #202230;
+  --surface: #2a2b3f;
+  --surface-muted: #33364a;
+  --line: #3d4055;
+  --ink: #f6f7f9;
+  --ink-soft: #d1d2e0;
+  --muted: #b7b9cd;
+  --faint: #9194ac;
+  --brand: #f6f7f9;
+  --on-brand: #202230;
+  --accent: #c0c4fc;
+  --accent-soft: #3a3d5c;
+  --periwinkle: #c0c4fc;
+  --nav-glow: rgba(0, 0, 0, 0.35) 0px 2px 8px 0px;
+  color-scheme: dark;
 }
 
-html.dark body,
-html.dark .professor-shell,
-html.dark .student-shell,
-html.dark [class*="bg-[#f4f7fb]"] {
-  background: #0f172a !important;
-  color: #e2e8f0;
+@theme inline {
+  --color-canvas: var(--canvas);
+  --color-surface: var(--surface);
+  --color-surface-muted: var(--surface-muted);
+  --color-line: var(--line);
+  --color-ink: var(--ink);
+  --color-ink-soft: var(--ink-soft);
+  --color-muted: var(--muted);
+  --color-faint: var(--faint);
+  --color-brand: var(--brand);
+  --color-on-brand: var(--on-brand);
+  --color-accent: var(--accent);
+  --color-accent-soft: var(--accent-soft);
+  --color-aubergine: var(--accent);
+  --color-periwinkle: var(--periwinkle);
+  --color-midnight: var(--midnight);
+  --font-sans: var(--font-sans-family), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-mono-family), ui-monospace, SFMono-Regular, Menlo, monospace;
 }
 
-html.dark .bg-white,
-html.dark [class*="bg-white/"] {
-  background-color: #172033 !important;
+@theme {
+  /* Soft tints that tag status/category; text on them stays ink. */
+  --color-sky: #e4e5fd;
+  --color-blush: #fde4e4;
+  --color-peach: #fbe9d0;
+  --color-mint: #ddf1e4;
+  --color-obsidian: #202230;
+  --color-slate: #595c73;
+
+  /* 4px inputs, 8px buttons/cards, 16px large cards, 24px feature cards. */
+  --radius-md: 4px;
+  --radius-lg: 8px;
+  --radius-xl: 8px;
+  --radius-2xl: 16px;
+  --radius-3xl: 24px;
+
+  /* Flat by default; the cool double-layer shadow is for hover and lift. */
+  --shadow-sm: oklch(0.6295 0.0204 306.5 / 0.08) 0px 2px 8px 0px, oklch(0.6295 0.0204 306.5 / 0.12) 0px 4px 16px 0px;
+  --shadow-md: 0 0 #0000;
+  --shadow-lg: 0 0 #0000;
+  --shadow-xl: 0 0 #0000;
 }
 
-html.dark .text-slate-900,
-html.dark .text-slate-800,
-html.dark .text-slate-700,
-html.dark .text-slate-600,
-html.dark .text-slate-500,
-html.dark .text-slate-400 {
-  color: #cbd5e1 !important;
+body {
+  background: var(--canvas);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  letter-spacing: 0;
 }
 
-html.dark .text-slate-300,
-html.dark .text-slate-200,
-html.dark .text-slate-100 {
-  color: #e2e8f0 !important;
-}
-
-html.dark .text-cyan-700,
-html.dark .text-cyan-600 {
-  color: #67e8f9 !important;
-}
-
-html.dark .hover\:text-cyan-900:hover,
-html.dark .hover\:text-cyan-800:hover,
-html.dark .hover\:text-cyan-700:hover {
-  color: #a5f3fc !important;
-}
-
-html.dark .bg-cyan-50,
-html.dark .hover\:bg-cyan-50:hover,
-html.dark .bg-cyan-50\/40 {
-  background-color: #164e63 !important;
-}
-
-html.dark .hover\:bg-slate-50:hover {
-  background-color: #263449 !important;
-}
-
-html.dark .hover\:text-slate-800:hover {
-  color: #f1f5f9 !important;
-}
-
-html.dark .border-slate-200,
-html.dark .border-slate-100,
-html.dark .border-white {
-  border-color: #334155 !important;
-}
-
-html.dark .border-slate-300,
-html.dark .border-cyan-100,
-html.dark .border-cyan-50 {
-  border-color: #475569 !important;
-}
-
-html.dark .profile-avatar-link {
-  border-color: #ffffff !important;
-}
-
-html.dark .bg-slate-50 {
-  background-color: #1e293b !important;
-}
-
-html.dark [class*="text-[#15345b]"],
-html.dark [class*="text-[#17233d]"],
-html.dark [class*="text-[#172b49]"],
-html.dark [class*="text-[#153b68]"],
-html.dark [class*="text-[#345477]"],
-html.dark [class*="text-[#3d5b7c]"],
-html.dark [class*="text-[#536680]"],
-html.dark [class*="text-[#71809a]"] {
-  color: #cbd5e1 !important;
-}
-
-html.dark [class*="text-[#91a0b4]"] {
-  color: #94a3b8 !important;
-}
-
-html.dark [class*="text-[#9aa7b7]"] {
-  color: #94a3b8 !important;
-}
-
-html.dark [class*="bg-[#fbfcfe]"] {
-  background-color: #172033 !important;
-}
-
-html.dark [class*="border-[#d6e0eb]"] {
-  border-color: #475569 !important;
-}
-
-html.dark [class*="hover:bg-[#eef5fb]"]:hover {
-  background-color: #263449 !important;
-}
-
-html.dark .bg-amber-50 {
-  background-color: #78350f !important;
-}
-
-html.dark .text-amber-800 {
-  color: #fde68a !important;
-}
-
-html.dark .hover\:bg-amber-100:hover {
-  background-color: #92400e !important;
-}
-
-main:has(aside) table tbody tr {
-  transition: background-color 160ms ease;
-}
-
-main:has(aside) table tbody tr:hover {
-  background-color: rgb(248 250 252);
-}
-
-html.dark main:has(aside) table tbody tr:hover {
-  background-color: #1e293b;
+/* Mono stays in labels, badges, buttons, and metadata. */
+.font-mono {
+  letter-spacing: 0.006em;
 }
 
 html.dark input,
 html.dark textarea,
 html.dark select {
-  color: #e2e8f0;
-  background-color: #172033;
-  border-color: #475569;
+  color: var(--ink);
+  background-color: var(--surface);
+  border-color: var(--line);
 }
 
 html.dark input::placeholder,
 html.dark textarea::placeholder {
-  color: #94a3b8;
+  color: var(--faint);
 }
 
-@media (min-width: 1024px) {
-  main > header + div {
-    position: relative;
-  }
-
-  .professor-shell > .mx-auto > .grid {
-    align-items: stretch;
-  }
-
-  .professor-shell > .mx-auto > .grid > aside {
-    position: static;
-    align-self: stretch;
-    width: 220px;
-  }
+::selection {
+  background: #c0c4fc;
+  color: #2a2b3f;
 }

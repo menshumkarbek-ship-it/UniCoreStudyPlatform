@@ -1,33 +1,48 @@
+import { randomUUID } from "node:crypto";
 import { NextResponse } from "next/server";
-import { compareSync } from "bcryptjs";
 import { z } from "zod";
-import { createSession } from "@/lib/auth";
-import { getDatabase } from "@/lib/db";
+import { createSession, hashPassword, verifyPassword } from "@/lib/auth";
+import { db } from "@/lib/db";
+import { HttpError, idSchema, readJson, route } from "@/lib/http";
+import { clearFailures, isRateLimited, recordFailure } from "@/lib/rate-limit";
 
 export const runtime = "nodejs";
 
 const loginSchema = z.object({
+  role: z.enum(["student", "professor", "admin"]),
+  universityId: idSchema.optional(),
   identifier: z.string().trim().min(1).max(160),
   password: z.string().min(1).max(200),
-  universityName: z.string().trim().min(1).max(200).optional(),
-  role: z.enum(["student", "professor", "admin"]),
 });
 
-export async function POST(request: Request) {
-  const parsed = loginSchema.safeParse(await request.json().catch(() => null));
-  if (!parsed.success) return NextResponse.json({ error: "Enter a valid university, ID, and password." }, { status: 400 });
-  const { identifier, password, universityName, role } = parsed.data;
-  const database = getDatabase();
-  const userSelect = "SELECT id, university_id, email, full_name, password_hash, role FROM users";
+// Compared against when the account does not exist, so response time does not reveal which accounts exist.
+let dummyHash: Promise<string> | undefined;
+
+export const POST = route(async (request) => {
+  const { role, universityId, identifier, password } = await readJson(request, loginSchema);
+  if (role !== "admin" && !universityId) throw new HttpError(400, "Choose your university.");
+  const bucket = `login:${role}:${universityId ?? "platform"}:${identifier.toLowerCase()}`;
+  // Also throttle by client address (when a reverse proxy supplies it), so one machine cannot spray guesses across many accounts. The limit is generous because a campus can share one public address.
+  const clientIp = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim();
+  const ipBucket = clientIp ? `login-ip:${clientIp}` : null;
+  if (await isRateLimited(bucket, 8, 15 * 60) || (ipBucket && await isRateLimited(ipBucket, 150, 15 * 60))) throw new HttpError(429, "Too many failed attempts. Try again in 15 minutes.");
+
   const user = role === "admin"
-    ? database.prepare(`${userSelect} WHERE email = ? AND role = 'admin'`).get(identifier.toLowerCase())
-    : database.prepare(`${userSelect} WHERE university_id = (SELECT id FROM universities WHERE name = ? COLLATE NOCASE) AND (email = ? OR (role = 'student' AND student_id = ?)) AND role = ?`).get(universityName, identifier.toLowerCase(), identifier, role);
-  const authenticatedUser = user;
-  if (!authenticatedUser && role !== "admin" && !universityName) return NextResponse.json({ error: "Choose your university." }, { status: 400 });
-  if (!authenticatedUser || authenticatedUser.role !== role || !compareSync(password, authenticatedUser.password_hash)) {
-    return NextResponse.json({ error: role === "admin" ? "Those administrator credentials are incorrect." : "Those credentials do not match this university and role." }, { status: 401 });
+    ? await db.one<{ id: number; passwordHash: string; tokenVersion: number }>(`SELECT id, password_hash AS "passwordHash", token_version AS "tokenVersion" FROM users WHERE role = 'admin' AND email = $1`, [identifier.toLowerCase()])
+    : await db.one<{ id: number; passwordHash: string; tokenVersion: number }>(
+      `SELECT id, password_hash AS "passwordHash", token_version AS "tokenVersion" FROM users
+        WHERE university_id = $1 AND role = $2 AND (email = lower($3) OR (role = 'student' AND student_number = $3))`,
+      [universityId, role, identifier],
+    );
+
+  dummyHash ??= hashPassword(randomUUID());
+  const valid = await verifyPassword(password, user?.passwordHash ?? await dummyHash);
+  if (!user || !valid) {
+    await recordFailure(bucket);
+    if (ipBucket) await recordFailure(ipBucket);
+    throw new HttpError(401, role === "admin" ? "Those administrator credentials are incorrect." : "Those credentials do not match this university and role.");
   }
-  await createSession({ userId: authenticatedUser.id, universityId: authenticatedUser.university_id, role: authenticatedUser.role, email: authenticatedUser.email, fullName: authenticatedUser.full_name });
-  const university = database.prepare("SELECT id, name, city FROM universities WHERE id = ?").get(authenticatedUser.university_id);
-  return NextResponse.json({ user: { email: authenticatedUser.email, fullName: authenticatedUser.full_name, role: authenticatedUser.role }, university });
-}
+  await clearFailures(bucket);
+  await createSession(user.id, user.tokenVersion);
+  return NextResponse.json({ role, redirectTo: role === "admin" ? "/admin" : "/dashboard" });
+});

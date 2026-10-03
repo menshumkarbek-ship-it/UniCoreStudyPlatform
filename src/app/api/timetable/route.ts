@@ -1,15 +1,18 @@
 import { NextResponse } from "next/server";
-import { getSession } from "@/lib/auth";
-import { getDatabase } from "@/lib/db";
+import { db } from "@/lib/db";
+import { requireUser, route } from "@/lib/http";
+import { timetableColumns, timetableJoins } from "@/lib/teaching";
 
 export const runtime = "nodejs";
 
-export async function GET() {
-  const session = await getSession();
-  if (!session) return NextResponse.json({ error: "Authentication required." }, { status: 401 });
-  const database = getDatabase();
-  const entries = session.role === "professor"
-    ? database.prepare("SELECT te.id, te.weekday, te.starts_at AS startsAt, te.ends_at AS endsAt, te.room, c.code, c.title, g.name AS groupName, u.full_name AS professorName FROM timetable_entries te JOIN courses c ON c.id = te.course_id JOIN groups g ON g.id = te.group_id JOIN users u ON u.id = te.professor_id WHERE te.professor_id = ? ORDER BY te.weekday, te.starts_at").all(session.userId)
-    : database.prepare("SELECT DISTINCT te.id, te.weekday, te.starts_at AS startsAt, te.ends_at AS endsAt, te.room, c.code, c.title, g.name AS groupName, u.full_name AS professorName FROM timetable_entries te JOIN courses c ON c.id = te.course_id JOIN groups g ON g.id = te.group_id JOIN users u ON u.id = te.professor_id JOIN enrollments e ON e.group_id = te.group_id WHERE e.user_id = ? ORDER BY te.weekday, te.starts_at").all(session.userId);
+// A professor's timetable is every class of the courses they own; a student's is their group's classes.
+export const GET = route(async () => {
+  const user = await requireUser("professor", "student");
+  const entries = await db.many(
+    `SELECT ${timetableColumns} ${timetableJoins}
+      WHERE ${user.role === "professor" ? "c.professor_id = $1" : "te.group_id = (SELECT group_id FROM enrollments WHERE student_id = $1)"}
+      ORDER BY te.weekday, te.starts_at`,
+    [user.id],
+  );
   return NextResponse.json({ entries });
-}
+});
