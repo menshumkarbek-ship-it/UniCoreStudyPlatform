@@ -172,7 +172,7 @@ function ProfessorExams() {
                 </select>
               </Field>
               <Field label={t.title} className="sm:col-span-2"><input name="title" required minLength={2} maxLength={200} placeholder={t.midtermPlaceholder} className={inputClass} /></Field>
-              <div className="grid grid-cols-3 gap-3 sm:col-span-2">
+              <div className="grid grid-cols-1 gap-3 min-[480px]:grid-cols-3 sm:col-span-2">
                 <Field label={t.dateLabel}><input name="examDate" type="date" required value={examDate} min={data?.today} onChange={(event) => setExamDate(event.target.value)} className={inputClass} /></Field>
                 <Field label={t.starts}><input name="startsAt" type="time" required value={startsAt} min={entry?.startsAt} max={entry?.endsAt} onChange={(event) => setStartsAt(event.target.value)} className={inputClass} /></Field>
                 <Field label={t.ends}><input name="endsAt" type="time" required value={endsAt} min={entry?.startsAt} max={entry?.endsAt} onChange={(event) => setEndsAt(event.target.value)} className={inputClass} /></Field>

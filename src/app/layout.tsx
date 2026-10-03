@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Inter, JetBrains_Mono } from "next/font/google";
 import { cookies } from "next/headers";
 import { defaultLocale, isLocale, localeCookieName } from "@/i18n/config";
@@ -23,6 +23,9 @@ export const metadata: Metadata = {
   title: { default: "UniCore", template: "%s · UniCore" },
   description: "Study platform for universities: subjects, timetables, homework, exams, attendance, and grades in one place.",
 };
+
+// Lets the page fill the whole phone screen (behind the notch); the bars add safe-area padding themselves.
+export const viewport: Viewport = { width: "device-width", initialScale: 1, viewportFit: "cover" };
 
 // Applies the saved theme before first paint so dark mode does not flash light.
 const themeScript = `try{if(localStorage.getItem("unicore-theme")==="dark")document.documentElement.classList.add("dark")}catch(e){}`;

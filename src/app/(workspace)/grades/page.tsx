@@ -139,7 +139,24 @@ function ProfessorGradebook() {
                 <div className="mt-4 border-t border-line pt-3">
                   <button type="button" onClick={() => setOpen(open === key ? null : key)} className={linkButton}>{open === key ? <ChevronUp size={14} /> : <ChevronDown size={14} />}{open === key ? t.hideStudents : t.showStudents}</button>
                   {open === key && (offering.students.length === 0 ? <p className="mt-2 text-xs text-muted">{t.noStudentsInGroup}</p> : (
-                    <div className="mt-3 overflow-x-auto rounded-lg border border-line bg-surface">
+                    <>
+                    <ul className="mt-3 space-y-2 md:hidden">
+                      {offering.students.map((student) => (
+                        <li key={student.studentId} className="rounded-lg border border-line bg-surface p-3">
+                          <div className="flex items-baseline justify-between gap-3">
+                            <p className="min-w-0 font-medium text-ink">{student.studentName}{student.studentNumber && <span className="ml-2 text-xs text-faint">{student.studentNumber}</span>}</p>
+                            <p className="shrink-0"><span className="font-bold text-ink">{number(student.score.earned)}</span><span className="text-xs text-muted"> / 100</span></p>
+                          </div>
+                          <dl className="mt-2 grid grid-cols-2 gap-x-4 gap-y-1 text-xs">
+                            {components.map((component) => {
+                              const average = student.score.components.find((item) => item.componentId === component.id)?.averagePercent ?? null;
+                              return <div key={component.id} className="flex justify-between gap-2"><dt className="truncate text-muted">{component.name}</dt><dd className="text-ink-soft">{average === null ? "—" : `${number(average)}%`}</dd></div>;
+                            })}
+                          </dl>
+                        </li>
+                      ))}
+                    </ul>
+                    <div className="mt-3 hidden overflow-x-auto rounded-lg border border-line bg-surface md:block">
                       <table className="min-w-full text-left text-sm">
                         <thead className="border-b border-line text-[11px] text-muted">
                           <tr>
@@ -162,6 +179,7 @@ function ProfessorGradebook() {
                         </tbody>
                       </table>
                     </div>
+                    </>
                   ))}
                 </div>
               </li>

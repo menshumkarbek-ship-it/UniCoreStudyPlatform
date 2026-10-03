@@ -20,8 +20,8 @@ export default function LanguageSwitcher() {
         className="flex items-center gap-1.5 text-sm font-semibold text-muted hover:text-accent"
       >
         <Languages size={15} />
-        <span>{dict.common.language[locale]}</span>
-        <ChevronDown size={15} className={`transition-transform ${open ? "rotate-180" : ""}`} />
+        <span className="hidden sm:inline">{dict.common.language[locale]}</span>
+        <ChevronDown size={15} className={`hidden sm:block transition-transform ${open ? "rotate-180" : ""}`} />
       </button>
       {open && (
         <div role="menu" className="absolute right-0 top-8 z-30 w-40 rounded-lg border border-ink bg-surface p-1.5">

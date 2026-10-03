@@ -53,7 +53,7 @@ export default function Home() {
         <div className="mx-auto flex h-16 max-w-[1200px] items-center justify-between gap-4 px-5">
           <span className="text-[20px] font-bold tracking-[-0.01em] text-ink">UniCore</span>
           <div className="flex items-center gap-2">
-            <span className="hidden sm:block"><LanguageSwitcher /></span>
+            <LanguageSwitcher />
             <ThemeToggle />
             <Link href="/login" className="inline-flex h-9 items-center gap-1.5 rounded-lg border-[1.5px] border-aubergine px-4 text-[12px] font-medium text-aubergine hover:shadow-sm">{l.signIn}<ArrowRight size={14} /></Link>
           </div>

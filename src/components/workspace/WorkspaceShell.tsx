@@ -3,17 +3,16 @@
 import { useEffect, useRef } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BarChart3, BookOpen, CalendarCheck, CalendarDays, CircleUserRound, ClipboardList, LayoutDashboard, LogOut, Megaphone, NotebookPen, type LucideIcon } from "lucide-react";
+import { ChevronLeft, CircleUserRound, LogOut } from "lucide-react";
 import Logo from "@/components/Logo";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
 import NotificationDropdown from "@/components/NotificationDropdown";
 import PlatformFooter from "@/components/PlatformFooter";
 import ThemeToggle from "@/components/ThemeToggle";
 import { SessionProvider, signOut } from "@/components/workspace/session-context";
+import { useNavItems } from "@/components/workspace/nav";
 import { useDictionary } from "@/i18n/locale-provider";
 import type { SessionUser } from "@/lib/auth";
-
-type NavItem = { href: string; label: string; icon: LucideIcon };
 
 export function Avatar({ user, size }: { user: Pick<SessionUser, "fullName" | "photoUrl">; size: number }) {
   const initials = user.fullName.split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part[0]?.toUpperCase()).join("");
@@ -29,39 +28,36 @@ export default function WorkspaceShell({ user, children }: { user: SessionUser; 
   const pathname = usePathname();
   const dict = useDictionary();
   const professor = user.role === "professor";
-  const nav: NavItem[] = [
-    { href: "/dashboard", label: dict.common.nav.dashboard, icon: LayoutDashboard },
-    { href: "/subjects", label: professor ? dict.wk.navMyTeaching : dict.common.nav.subjects, icon: BookOpen },
-    { href: "/timetable", label: dict.common.nav.timetable, icon: CalendarDays },
-    { href: "/homework", label: dict.common.nav.homework, icon: ClipboardList },
-    { href: "/exams", label: dict.wk.navExams, icon: NotebookPen },
-    { href: "/grades", label: professor ? dict.wk.navGradebook : dict.wk.navGrades, icon: BarChart3 },
-    { href: "/attendance", label: dict.wk.navAttendance, icon: CalendarCheck },
-    { href: "/bulletin", label: dict.wk.navBulletin, icon: Megaphone },
-  ];
+  const nav = useNavItems(professor);
   const isActive = (href: string) => pathname === href || pathname.startsWith(`${href}/`);
   // Profile & settings opens on its own, without the sidebar, and has a Back button.
   const focused = isActive("/profile");
+  // On a phone the app opens on the dashboard; every other screen has a back arrow and its own title in the header.
+  const onHome = pathname === "/dashboard";
+  const backHref = pathname.startsWith("/subjects/") ? "/subjects" : "/dashboard";
+  const title = focused ? dict.common.nav.profile : nav.find((item) => isActive(item.href))?.label ?? "";
+  const tabs = [nav[0], nav[1], nav[2], nav[3], { href: "/profile", label: dict.common.nav.profile, icon: CircleUserRound }];
   const frame = useRef<HTMLDivElement>(null);
   // The frame persists across sections and scrolls on its own, so start each section at its top.
   useEffect(() => { frame.current?.scrollTo(0, 0); }, [pathname]);
 
   return (
     <SessionProvider user={user}>
-      <div className="flex min-h-screen flex-col bg-canvas text-ink">
+      <div className="flex min-h-screen flex-col bg-canvas pb-[calc(4.5rem+env(safe-area-inset-bottom))] text-ink lg:pb-0">
         <header className="sticky top-0 z-20 border-b border-line bg-surface shadow-[var(--nav-glow)]">
           <div className="mx-auto flex h-16 max-w-[1200px] items-center justify-between gap-4 px-4 sm:px-6">
-            <Link href="/dashboard" className="min-w-0"><Logo /></Link>
+            <Link href="/dashboard" className={`min-w-0 ${onHome ? "" : "hidden lg:block"}`}><Logo /></Link>
+            {!onHome && <div className="flex min-w-0 flex-1 items-center gap-1 lg:hidden">
+              <Link href={backHref} aria-label={dict.common.actions.back} className="-ml-2 flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-ink active:bg-surface-muted"><ChevronLeft size={24} strokeWidth={1.75} /></Link>
+              <p className="truncate text-lg font-semibold text-ink">{title}</p>
+            </div>}
             <div className="flex items-center gap-1 sm:gap-2">
-              <span className="hidden sm:block"><LanguageSwitcher /></span>
+              <LanguageSwitcher />
               <ThemeToggle />
               <NotificationDropdown />
               <Link href="/profile" aria-label={dict.common.nav.profile} className="ml-1 rounded-full"><Avatar user={user} size={34} /></Link>
             </div>
           </div>
-          {!focused && <nav aria-label={dict.wk.workspace} className="flex gap-1 overflow-x-auto border-t border-line px-4 lg:hidden">
-            {nav.map((item) => <Link key={item.href} href={item.href} className={`flex shrink-0 items-center gap-1.5 border-b-2 px-2.5 py-2.5 text-[11px] font-medium tracking-[0.05em] ${isActive(item.href) ? "border-periwinkle text-ink" : "border-transparent text-muted"}`}><item.icon size={13} strokeWidth={1.75} />{item.label}</Link>)}
-          </nav>}
         </header>
 
         <div className={`mx-auto grid w-full max-w-[1200px] flex-1 grid-cols-1 gap-8 px-4 py-8 sm:px-6 lg:py-10 ${focused ? "" : "lg:grid-cols-[260px_minmax(0,1fr)]"}`}>
@@ -98,6 +94,17 @@ export default function WorkspaceShell({ user, children }: { user: SessionUser; 
           </main>
         </div>
         <PlatformFooter />
+        <nav aria-label={dict.wk.workspace} className="fixed inset-x-0 bottom-0 z-30 grid grid-cols-5 border-t border-line bg-surface pb-[env(safe-area-inset-bottom)] lg:hidden">
+          {tabs.map((item) => {
+            const active = isActive(item.href);
+            return (
+              <Link key={item.href} href={item.href} aria-current={active ? "page" : undefined} className={`flex h-[4.25rem] min-w-0 flex-col items-center justify-center gap-1 px-1 text-[11px] font-medium active:bg-surface-muted ${active ? "text-accent" : "text-muted"}`}>
+                <item.icon size={22} strokeWidth={active ? 2.25 : 1.75} />
+                <span className="w-full truncate text-center">{item.label}</span>
+              </Link>
+            );
+          })}
+        </nav>
       </div>
     </SessionProvider>
   );

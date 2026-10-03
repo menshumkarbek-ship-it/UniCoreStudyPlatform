@@ -117,9 +117,9 @@ export default function UniversityPage() {
     <>
       <Link href="/admin" className="mb-4 inline-flex items-center gap-1.5 text-sm font-semibold text-muted hover:text-accent"><ArrowLeft size={15} />{t.back}</Link>
       <PageHeader eyebrow={university ? `${university.city} · ${university.timezone}` : ""} title={university?.name ?? "…"} icon={Building2} description={t.uniPageDescription} />
-      <div className="mb-5 flex gap-1 overflow-x-auto overflow-y-hidden border-b border-line" role="tablist">
+      <div className="mb-5 grid grid-cols-2 gap-2 md:flex md:gap-1 md:overflow-x-auto md:overflow-y-hidden md:border-b md:border-line" role="tablist">
         {tabs.map((item) => {
-          return <button key={item.key} type="button" role="tab" aria-selected={tab === item.key} onClick={() => chooseTab(item.key)} className={`-mb-px flex shrink-0 items-center gap-2 border-b-2 px-4 py-3 text-[11px] font-medium transition ${tab === item.key ? "border-periwinkle text-ink" : "border-transparent text-muted hover:text-ink"}`}><item.icon size={14} strokeWidth={1.75} />{t[item.label]}</button>;
+          return <button key={item.key} type="button" role="tab" aria-selected={tab === item.key} onClick={() => chooseTab(item.key)} className={`flex items-center gap-2 rounded-lg border px-3 py-3.5 text-sm font-medium transition active:bg-surface-muted md:-mb-px md:shrink-0 md:rounded-none md:border-0 md:border-b-2 md:px-4 md:py-3 md:text-[11px] ${tab === item.key ? "border-periwinkle bg-accent-soft text-ink md:bg-transparent" : "border-line bg-surface text-muted hover:text-ink md:border-transparent md:bg-transparent"}`}><item.icon size={14} strokeWidth={1.75} />{t[item.label]}</button>;
         })}
       </div>
 

@@ -63,7 +63,7 @@ export default function ProfilePage() {
 
   return (
     <>
-      <div className="mb-5 flex items-center gap-4 rounded-lg border border-line bg-surface p-4 sm:px-6">
+      <div className="mb-5 hidden items-center gap-4 rounded-lg border border-line bg-surface p-4 sm:px-6 lg:flex">
         <button type="button" onClick={goBack} className={`${secondaryButton} h-9 text-xs`}><ArrowLeft size={14} />{dict.common.actions.back}</button>
         <h1 className="text-xl font-bold text-ink">{dict.profile.title}</h1>
       </div>

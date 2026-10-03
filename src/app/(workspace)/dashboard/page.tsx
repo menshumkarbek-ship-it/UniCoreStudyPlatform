@@ -2,10 +2,11 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { Bell, CalendarClock, CheckCheck, Clock3, Globe, GraduationCap } from "lucide-react";
+import { Bell, CalendarClock, CheckCheck, ChevronRight, Clock3, Globe, GraduationCap } from "lucide-react";
 import { useNotifications } from "@/components/NotificationDropdown";
 import { Badge, Card, EmptyState, Stat } from "@/components/ui";
 import { useSessionUser } from "@/components/workspace/session-context";
+import { useNavItems } from "@/components/workspace/nav";
 import { useDictionary } from "@/i18n/locale-provider";
 import { fill } from "@/i18n/format";
 import { useApi, formatDate, formatDateTime } from "@/lib/client";
@@ -115,6 +116,29 @@ function UpcomingEvents({ events }: { events: EventItem[] }) {
   );
 }
 
+/** Phone home screen: every section as a tappable row; pressing one opens that section's content. Desktop has the sidebar instead. */
+function MobileSections() {
+  const dict = useDictionary();
+  const user = useSessionUser();
+  const items = useNavItems(user.role === "professor").slice(1);
+  return (
+    <nav aria-label={dict.wk.workspace} className="mb-5 overflow-hidden rounded-lg border border-line bg-surface lg:hidden">
+      <p className="px-4 pt-4 text-[13px] font-medium text-muted">{dict.wk.workspace}</p>
+      <ul className="mt-2 divide-y divide-line">
+        {items.map((item) => (
+          <li key={item.href}>
+            <Link href={item.href} className="flex min-h-14 items-center gap-3 px-4 py-2 active:bg-surface-muted">
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-accent-soft text-accent"><item.icon size={18} strokeWidth={1.75} /></span>
+              <span className="min-w-0 flex-1 truncate text-base font-medium text-ink">{item.label}</span>
+              <ChevronRight size={18} className="shrink-0 text-faint" />
+            </Link>
+          </li>
+        ))}
+      </ul>
+    </nav>
+  );
+}
+
 /** Latest notifications beside upcoming events: the same two containers for students and professors. */
 function DashboardPanels({ events }: { events: EventItem[] }) {
   return (
@@ -147,6 +171,7 @@ function StudentDashboard() {
     <>
       {profile && !profile.placement && <div className="mb-5 rounded-lg bg-peach px-4 py-3 text-sm text-obsidian">{t.notInGroup}</div>}
       <OverviewStats now={now} entries={timetable?.entries} universityDetail={profile?.placement?.facultyName} />
+      <MobileSections />
       <DashboardPanels events={events} />
     </>
   );
@@ -175,6 +200,7 @@ function ProfessorDashboard() {
     <>
       {/* Under the university: a student sees their faculty; a professor, who may teach in several, sees the city. */}
       <OverviewStats now={now} entries={timetable?.entries} universityDetail={user.universityCity ?? undefined} />
+      <MobileSections />
       <DashboardPanels events={events} />
     </>
   );

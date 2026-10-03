@@ -81,7 +81,25 @@ export default function ResourceSection<T extends Item>({ resource, universityId
         </form>
       )}
       {!loading && items.length === 0 ? <EmptyState icon={icon} title={n.empty} description={emptyHint} /> : (
-        <div className="overflow-x-auto rounded-xl border border-line bg-surface shadow-sm">
+        <>
+        <ul className="space-y-3 md:hidden">
+          {items.map((item) => (
+            <li key={item.id} className={`rounded-lg border border-line bg-surface p-4 ${current?.id === item.id ? "bg-mint/40" : ""}`}>
+              <dl className="space-y-2">
+                {columns.map((column, index) => (
+                  <div key={column.header} className={index === 0 ? "" : "flex items-start justify-between gap-4 text-sm"}>
+                    {index === 0 ? <dd className="text-base text-ink">{column.cell(item)}</dd> : <><dt className="shrink-0 text-muted">{column.header}</dt><dd className="min-w-0 text-right text-ink-soft">{column.cell(item)}</dd></>}
+                  </div>
+                ))}
+              </dl>
+              <div className="mt-3 flex gap-2 border-t border-line pt-3">
+                <button type="button" onClick={() => { setEditing(item); setMessage(null); section.current?.scrollIntoView({ behavior: "smooth", block: "start" }); }} className="inline-flex h-10 flex-1 items-center justify-center gap-1.5 rounded-lg border border-line text-sm font-medium text-ink"><Pencil size={13} />{t.edit}</button>
+                <button type="button" onClick={() => void remove(item)} className={`${dangerButton} h-10 flex-1`}><Trash2 size={13} />{t.delete}</button>
+              </div>
+            </li>
+          ))}
+        </ul>
+        <div className="hidden overflow-x-auto rounded-xl border border-line bg-surface shadow-sm md:block">
           <table className="min-w-full text-left text-sm">
             <thead className="border-b border-line text-[11px] text-muted">
               <tr>{columns.map((column) => <th key={column.header} className={`px-4 py-3 font-bold ${column.className ?? ""}`}>{column.header}</th>)}<th className="px-4 py-3 text-right font-bold">{t.actions}</th></tr>
@@ -99,6 +117,7 @@ export default function ResourceSection<T extends Item>({ resource, universityId
             </tbody>
           </table>
         </div>
+        </>
       )}
     </div>
   );
