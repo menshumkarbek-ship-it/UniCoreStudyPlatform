@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { createSession, hashPassword, verifyPassword } from "@/lib/auth";
+import { createSession, hashPassword, sessionLifetimeSeconds, verifyPassword } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { HttpError, idSchema, readJson, route } from "@/lib/http";
 import { clearFailures, isRateLimited, recordFailure } from "@/lib/rate-limit";
@@ -13,13 +13,15 @@ const loginSchema = z.object({
   universityId: idSchema.optional(),
   identifier: z.string().trim().min(1).max(160),
   password: z.string().min(1).max(200),
+  // Native apps send "mobile" to receive the session token in the response instead of a cookie.
+  client: z.enum(["web", "mobile"]).optional(),
 });
 
 // Compared against when the account does not exist, so response time does not reveal which accounts exist.
 let dummyHash: Promise<string> | undefined;
 
 export const POST = route(async (request) => {
-  const { role, universityId, identifier, password } = await readJson(request, loginSchema);
+  const { role, universityId, identifier, password, client } = await readJson(request, loginSchema);
   if (role !== "admin" && !universityId) throw new HttpError(400, "Choose your university.");
   const bucket = `login:${role}:${universityId ?? "platform"}:${identifier.toLowerCase()}`;
   // Also throttle by client address (when a reverse proxy supplies it), so one machine cannot spray guesses across many accounts. The limit is generous because a campus can share one public address.
@@ -43,6 +45,7 @@ export const POST = route(async (request) => {
     throw new HttpError(401, role === "admin" ? "Those administrator credentials are incorrect." : "Those credentials do not match this university and role.");
   }
   await clearFailures(bucket);
-  await createSession(user.id, user.tokenVersion);
-  return NextResponse.json({ role, redirectTo: role === "admin" ? "/admin" : "/dashboard" });
+  const mobile = client === "mobile";
+  const token = await createSession(user.id, user.tokenVersion, { cookie: !mobile });
+  return NextResponse.json({ role, redirectTo: role === "admin" ? "/admin" : "/dashboard", ...(mobile && { token, expiresIn: sessionLifetimeSeconds }) });
 });

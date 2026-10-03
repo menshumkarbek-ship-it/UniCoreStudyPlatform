@@ -44,3 +44,7 @@ data/*.sqlite
 data/*.sqlite-shm
 data/*.sqlite-wal
 data/uploads/
+
+# Claude Code local files
+.claude/
+skills-lock.json

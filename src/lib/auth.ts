@@ -4,7 +4,7 @@ import { cache } from "react";
 import { randomUUID } from "node:crypto";
 import { compare, hash } from "bcryptjs";
 import { SignJWT, jwtVerify } from "jose";
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { db } from "@/lib/db";
 
 export type Role = "admin" | "professor" | "student";
@@ -41,15 +41,32 @@ export function verifyPassword(password: string, passwordHash: string) {
   return compare(password, passwordHash);
 }
 
-/** Signs a session for the user. `tokenVersion` lets a password change or sign-out-everywhere revoke old cookies. */
-export async function createSession(userId: number, tokenVersion: number) {
+/**
+ * Signs a session for the user and returns the token. Browsers get it as an httpOnly cookie; native apps pass
+ * `cookie: false` and send the returned token back as `Authorization: Bearer <token>`.
+ */
+export async function createSession(userId: number, tokenVersion: number, { cookie = true }: { cookie?: boolean } = {}) {
   const token = await new SignJWT({ v: tokenVersion }).setProtectedHeader({ alg: "HS256" }).setSubject(String(userId)).setJti(randomUUID()).setIssuedAt().setExpirationTime(`${sessionMaxAgeSeconds}s`).sign(secretKey());
-  (await cookies()).set(sessionCookie, token, { httpOnly: true, sameSite: "lax", secure: process.env.NODE_ENV === "production", path: "/", maxAge: sessionMaxAgeSeconds });
+  if (cookie) (await cookies()).set(sessionCookie, token, { httpOnly: true, sameSite: "lax", secure: process.env.NODE_ENV === "production", path: "/", maxAge: sessionMaxAgeSeconds });
+  return token;
+}
+
+export const sessionLifetimeSeconds = sessionMaxAgeSeconds;
+
+/** True when the request authenticates with a bearer token (a native app) rather than the session cookie. */
+export function isBearerRequest(request: Request) {
+  return /^Bearer\s+\S/i.test(request.headers.get("authorization") ?? "");
+}
+
+/** The session token of the current request: the `Authorization: Bearer` header if present, otherwise the cookie. */
+async function requestToken() {
+  const bearer = (await headers()).get("authorization")?.match(/^Bearer\s+(\S+)$/i)?.[1];
+  return bearer ?? (await cookies()).get(sessionCookie)?.value;
 }
 
 /** Ends the current session for good: the cookie is removed and its id is blacklisted until the token would have expired. */
 export async function revokeCurrentSession() {
-  const token = (await cookies()).get(sessionCookie)?.value;
+  const token = await requestToken();
   const payload = token ? await jwtVerify(token, secretKey(), { algorithms: ["HS256"] }).then((verified) => verified.payload, () => null) : null;
   if (payload?.jti && payload.exp) {
     try {
@@ -70,7 +87,7 @@ export async function clearSession() {
 
 /** The signed-in user, re-read from the database on every request so deleted or rotated accounts lose access at once. */
 export const getSession = cache(async (): Promise<SessionUser | null> => {
-  const token = (await cookies()).get(sessionCookie)?.value;
+  const token = await requestToken();
   if (!token) return null;
   let userId: number;
   let tokenVersion: number;

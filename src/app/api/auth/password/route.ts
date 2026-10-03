@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { createSession, hashPassword, verifyPassword } from "@/lib/auth";
+import { createSession, hashPassword, isBearerRequest, sessionLifetimeSeconds, verifyPassword } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { HttpError, readJson, requireUser, route } from "@/lib/http";
 
@@ -12,7 +12,8 @@ const passwordSchema = z.object({
 });
 
 // Changing the password signs out every other device by bumping token_version,
-// then issues a fresh cookie so this device stays signed in.
+// then issues a fresh session so this device stays signed in: a cookie for browsers, or (for a bearer-token
+// client) a new token in the response.
 export const PATCH = route(async (request) => {
   const user = await requireUser();
   const { currentPassword, newPassword } = await readJson(request, passwordSchema);
@@ -20,6 +21,7 @@ export const PATCH = route(async (request) => {
   if (!row || !await verifyPassword(currentPassword, row.passwordHash)) throw new HttpError(400, "Your current password is incorrect.");
   if (currentPassword === newPassword) throw new HttpError(400, "Choose a password you have not just used.");
   const updated = await db.one<{ tokenVersion: number }>(`UPDATE users SET password_hash = $2, token_version = token_version + 1 WHERE id = $1 RETURNING token_version AS "tokenVersion"`, [user.id, await hashPassword(newPassword)]);
-  await createSession(user.id, updated!.tokenVersion);
-  return NextResponse.json({ ok: true });
+  const bearer = isBearerRequest(request);
+  const token = await createSession(user.id, updated!.tokenVersion, { cookie: !bearer });
+  return NextResponse.json({ ok: true, ...(bearer && { token, expiresIn: sessionLifetimeSeconds }) });
 });
